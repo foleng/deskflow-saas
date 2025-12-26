@@ -1,0 +1,38 @@
+services:
+  # 1. 关系型数据库：存客服、访客、会话状态
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: kefu_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+
+  # 2. 缓存与队列：存SocketID映射、排队队列、Pub/Sub
+  redis:
+    image: redis:6.2
+    ports:
+      - "6379:6379"
+
+  # 3. 文档数据库：存海量聊天记录
+  mongo:
+    image: mongo:5.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/mongo:/data/db
+
+ # 4. 对象存储 (模拟 AWS S3)
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"  # API 端口
+      - "9001:9001"  # 管理控制台端口
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password123
+    command: server /data --console-address ":9001"
+    volumes:
+      - ./data/minio:/data

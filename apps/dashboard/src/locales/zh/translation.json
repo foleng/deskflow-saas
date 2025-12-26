@@ -1,0 +1,172 @@
+{
+  "app": {
+    "name": "DeskFlow"
+  },
+  "menu": {
+    "dashboard": "概览",
+    "inbox": "收件箱",
+    "contacts": "通讯录",
+    "reports": "数据报表",
+    "settings": "设置",
+    "logout": "退出登录"
+  },
+  "status": {
+    "online": "在线"
+  },
+   "dashboard": {
+    "title": "概览",
+    "subtitle": "欢迎回来！这是今天的最新动态。",
+    "period": {
+      "today": "今天",
+      "7days": "近7天",
+      "30days": "近30天"
+    },
+    "stats": {
+      "conversations": "进行中的对话",
+      "responseTime": "平均响应时间",
+      "csat": "满意度评分",
+      "agents": "在线客服"
+    },
+    "inbox": {
+      "title": "紧急收件箱",
+      "viewAll": "查看全部",
+      "columns": {
+        "status": "状态",
+        "subject": "主题",
+        "customer": "客户",
+        "updated": "更新时间"
+      }
+    },
+    "team": {
+      "title": "团队状态",
+      "viewAll": "查看所有成员"
+    },
+    "activity": {
+      "title": "实时动态"
+    }
+  },
+  "contacts": {
+    "title": "通讯录",
+    "subtitle": "管理您的客户数据库 (1,240)",
+    "add": "新建联系人",
+    "import": "导入",
+    "searchPlaceholder": "搜索姓名、邮箱或电话...",
+    "sort": "排序: 最近活跃",
+    "filter": "筛选: VIP",
+    "columns": {
+      "user": "用户",
+      "contactInfo": "联系方式",
+      "company": "公司",
+      "lastActive": "最近活跃",
+      "tags": "标签",
+      "actions": "操作"
+    }
+  },
+   "inbox": {
+    "search": "搜索消息...",
+    "tabs": {
+      "mine": "我的",
+      "unassigned": "未分配",
+      "all": "全部"
+    },
+    "chat": {
+      "replyPlaceholder": "在此输入回复... (按 Cmd+Enter 发送)",
+      "send": "发送",
+      "resolve": "解决工单",
+      "privateNote": "内部备注"
+    },
+    "details": {
+      "contactInfo": "联系信息",
+      "attributes": "属性",
+      "previousConversations": "历史对话",
+      "viewAllHistory": "查看全部历史"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "subtitle": "管理您的工作区",
+    "menu": {
+      "account": "账户",
+      "profile": "个人设置",
+      "notifications": "通知",
+      "team": "团队",
+      "agents": "客服成员",
+      "roles": "角色与权限",
+      "org": "组织",
+      "general": "通用",
+      "billing": "账单",
+      "integrations": "集成",
+      "apps": "应用",
+      "webhooks": "Webhooks"
+    },
+    "team": {
+      "title": "团队管理",
+      "subtitle": "管理团队成员及其账号权限。",
+      "addAgent": "添加成员",
+      "searchPlaceholder": "搜索成员姓名或邮箱...",
+      "filterRole": "所有角色",
+      "filterStatus": "激活状态",
+      "columns": {
+        "name": "姓名",
+        "email": "邮箱",
+        "role": "角色",
+        "status": "状态",
+        "actions": "操作"
+      },
+      "roles": {
+        "admin": "管理员",
+        "agent": "客服",
+        "viewer": "访客"
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "欢迎回来",
+      "subtitle": "请输入您的详细信息以访问控制台。",
+      "email": "电子邮箱",
+      "password": "密码",
+      "forgot": "忘记密码?",
+      "submit": "登 录",
+      "or": "或通过以下方式继续",
+      "noAccount": "还没有账号?",
+      "signup": "注册",
+      "placeholder": {
+        "email": "agent@company.com"
+      }
+    },
+    "hero": {
+      "title": "每一天，都提供卓越的支持。",
+      "desc": "加入成千上万个使用我们平台建立有意义客户关系的团队。"
+    }
+  },
+  "reports": {
+    "title": "数据分析概览",
+    "subtitle": "追踪团队绩效与客户满意度指标。",
+    "period": {
+      "last7": "近7天",
+      "last30": "近30天",
+      "last90": "近90天"
+    },
+    "export": "导出 CSV",
+    "filter": "筛选",
+    "cards": {
+      "totalConversations": "总对话数",
+      "avgResponseTime": "平均响应时间",
+      "resolutionRate": "解决率",
+      "csat": "满意度评分"
+    },
+    "charts": {
+      "volume": "对话趋势",
+      "volumeSubtitle": "新增 vs 已解决",
+      "agentPerf": "客服绩效",
+      "satisfaction": "满意度分布"
+    },
+    "agentTable": {
+      "agent": "客服",
+      "volume": "处理量",
+      "avgTime": "平均耗时",
+      "rating": "评分"
+    }
+  }
+}

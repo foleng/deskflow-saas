@@ -1,0 +1,172 @@
+{
+  "app": {
+    "name": "DeskFlow"
+  },
+  "menu": {
+    "dashboard": "Dashboard",
+    "inbox": "Inbox",
+    "contacts": "Contacts",
+    "reports": "Reports",
+    "settings": "Settings",
+    "logout": "Log Out"
+  },
+  "status": {
+    "online": "Online"
+  },
+  "dashboard": {
+    "title": "Overview",
+    "subtitle": "Welcome back! Here's what's happening today.",
+    "period": {
+      "today": "Today",
+      "7days": "7 Days",
+      "30days": "30 Days"
+    },
+    "stats": {
+      "conversations": "Open Conversations",
+      "responseTime": "Avg Response Time",
+      "csat": "CSAT Score",
+      "agents": "Online Agents"
+    },
+    "inbox": {
+      "title": "Priority Inbox",
+      "viewAll": "View All",
+      "columns": {
+        "status": "Status",
+        "subject": "Subject",
+        "customer": "Customer",
+        "updated": "Updated"
+      }
+    },
+    "team": {
+      "title": "Team Availability",
+      "viewAll": "View All Agents"
+    },
+    "activity": {
+      "title": "Live Activity"
+    }
+  },
+  "contacts": {
+    "title": "Contacts",
+    "subtitle": "Manage your customer database (1,240)",
+    "add": "Add Contact",
+    "import": "Import",
+    "searchPlaceholder": "Search by name, email, or phone...",
+    "sort": "Sort: Last Active",
+    "filter": "Filter: VIP",
+    "columns": {
+      "user": "User",
+      "contactInfo": "Contact Info",
+      "company": "Company",
+      "lastActive": "Last Active",
+      "tags": "Tags",
+      "actions": "Actions"
+    }
+  },
+  "inbox": {
+    "search": "Search messages...",
+    "tabs": {
+      "mine": "Mine",
+      "unassigned": "Unassigned",
+      "all": "All"
+    },
+    "chat": {
+      "replyPlaceholder": "Type your reply here... (Press Cmd+Enter to send)",
+      "send": "Send",
+      "resolve": "Resolve",
+      "privateNote": "Private Note"
+    },
+    "details": {
+      "contactInfo": "Contact Info",
+      "attributes": "Attributes",
+      "previousConversations": "Previous Conversations",
+      "viewAllHistory": "View All History"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your workspace",
+    "menu": {
+      "account": "ACCOUNT",
+      "profile": "Profile Settings",
+      "notifications": "Notifications",
+      "team": "TEAM",
+      "agents": "Agents",
+      "roles": "Roles & Permissions",
+      "org": "ORGANIZATION",
+      "general": "General",
+      "billing": "Billing",
+      "integrations": "INTEGRATIONS",
+      "apps": "Applications",
+      "webhooks": "Webhooks"
+    },
+    "team": {
+      "title": "Team Management",
+      "subtitle": "Manage your team members and their account permissions.",
+      "addAgent": "Add Agent",
+      "searchPlaceholder": "Search agents by name or email...",
+      "filterRole": "All Roles",
+      "filterStatus": "Active",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "roles": {
+        "admin": "Administrator",
+        "agent": "Agent",
+        "viewer": "Viewer"
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Please enter your details to access your dashboard.",
+      "email": "Email Address",
+      "password": "Password",
+      "forgot": "Forgot Password?",
+      "submit": "Log In",
+      "or": "OR CONTINUE WITH",
+      "noAccount": "Don't have an account?",
+      "signup": "Sign up",
+      "placeholder": {
+        "email": "agent@company.com"
+      }
+    },
+    "hero": {
+      "title": "Deliver exceptional support, every single day.",
+      "desc": "Join thousands of support teams who use our platform to create meaningful customer relationships."
+    }
+  },
+  "reports": {
+    "title": "Analytics Overview",
+    "subtitle": "Track your team's performance and customer satisfaction metrics.",
+    "period": {
+      "last7": "Last 7 Days",
+      "last30": "Last 30 Days",
+      "last90": "Last 90 Days"
+    },
+    "export": "Export CSV",
+    "filter": "Filter",
+    "cards": {
+      "totalConversations": "Total Conversations",
+      "avgResponseTime": "Avg Response Time",
+      "resolutionRate": "Resolution Rate",
+      "csat": "CSAT Score"
+    },
+    "charts": {
+      "volume": "Conversation Volume",
+      "volumeSubtitle": "Incoming vs Resolved over time",
+      "agentPerf": "Agent Performance",
+      "satisfaction": "Satisfaction"
+    },
+    "agentTable": {
+      "agent": "Agent",
+      "volume": "Volume",
+      "avgTime": "Avg Time",
+      "rating": "Rating"
+    }
+  }
+}
