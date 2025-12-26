@@ -1,0 +1,31 @@
+<!-- Example of how to embed the widget -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget Loader Example</title>
+</head>
+<body>
+    <h1>My Website</h1>
+    <p>The widget should appear in the bottom right corner.</p>
+
+    <!-- Loader Code -->
+    <script>
+        (function(w,d,s,u,id){
+          w.DeskFlow=w.DeskFlow||{};
+          var f=d.getElementsByTagName(s)[0],
+          j=d.createElement(s);
+          j.async=true;
+          j.src=u;
+          // Core: Inject Web Component once script is loaded
+          j.onload = function() {
+              var container = d.createElement('div');
+              container.innerHTML = '<deskflow-widget data-website-id="' + id + '"></deskflow-widget>';
+              d.body.appendChild(container);
+          };
+          f.parentNode.insertBefore(j,f);
+        })(window,document,'script','./dist/widget.js','YOUR_WEBSITE_ID_123');
+    </script>
+</body>
+</html>
