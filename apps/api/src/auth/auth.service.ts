@@ -101,6 +101,7 @@ export class AuthService {
           
           return { success: true, message: 'Password updated successfully' };
       } catch (e) {
+          console.error('Reset Password Error:', e);
           throw new UnauthorizedException('Invalid or expired token');
       }
   }

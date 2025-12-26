@@ -9,8 +9,15 @@ import { UploadModule } from './upload/upload.module';
 import { ConversationModule } from './conversation/conversation.module';
 import { RedisModule } from './common/redis/redis.module';
 
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',

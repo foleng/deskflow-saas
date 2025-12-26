@@ -13,6 +13,12 @@ export class AgentService {
     return this.agentModel.create(data);
   }
 
+  async findAll(): Promise<Agent[]> {
+    return this.agentModel.findAll({
+      attributes: { exclude: ['password'] }
+    });
+  }
+
   async findOneByEmail(email: string): Promise<Agent> {
     return this.agentModel.findOne({ where: { email } });
   }
@@ -22,10 +28,9 @@ export class AgentService {
   }
 
   async update(id: number, data: Partial<Agent>) {
-    const [numberOfAffectedRows, [updatedAgent]] = await this.agentModel.update(data, {
+    const [numberOfAffectedRows] = await this.agentModel.update(data, {
       where: { id },
-      returning: true,
     });
-    return { numberOfAffectedRows, updatedAgent };
+    return { numberOfAffectedRows };
   }
 }

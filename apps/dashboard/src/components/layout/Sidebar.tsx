@@ -56,7 +56,11 @@ const Sidebar: React.FC = () => {
       {/* 2. User Profile */}
       <div className="px-4 py-6">
         <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:border-primary-200 transition-colors">
-          <Avatar src={user?.avatar || "https://i.pravatar.cc/150?u=agent"} size="large" className="border-2 border-white shadow-sm" />
+          <Avatar 
+            src={user?.avatar?.startsWith('/uploads') ? `http://localhost:3000${user.avatar}` : (user?.avatar || "https://i.pravatar.cc/150?u=agent")} 
+            size="large" 
+            className="border-2 border-white shadow-sm" 
+          />
           <div className="flex flex-col overflow-hidden">
             <span className="text-sm font-semibold text-slate-900 truncate">{user?.nickname || 'Agent'}</span>
             <div className="flex items-center gap-1.5">

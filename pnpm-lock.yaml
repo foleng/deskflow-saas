@@ -53,6 +53,9 @@ importers:
       '@nestjs/sequelize':
         specifier: ^11.0.1
         version: 11.0.1(@nestjs/common@11.1.10)(@nestjs/core@11.1.10)(reflect-metadata@0.2.2)(rxjs@7.8.2)(sequelize-typescript@2.1.6)(sequelize@6.37.7)
+      '@nestjs/serve-static':
+        specifier: ^5.0.4
+        version: 5.0.4(@nestjs/common@11.1.10)(@nestjs/core@11.1.10)(express@5.2.1)
       '@nestjs/websockets':
         specifier: ^11.1.10
         version: 11.1.10(@nestjs/common@11.1.10)(@nestjs/core@11.1.10)(@nestjs/platform-socket.io@11.1.10)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -86,6 +89,9 @@ importers:
       mongoose:
         specifier: ^9.0.2
         version: 9.0.2
+      multer:
+        specifier: ^2.0.2
+        version: 2.0.2
       mysql2:
         specifier: ^3.16.0
         version: 3.16.0
@@ -2188,6 +2194,28 @@ packages:
       rxjs: 7.8.2
       sequelize: 6.37.7(mysql2@3.16.0)
       sequelize-typescript: 2.1.6(@types/node@24.10.1)(@types/validator@13.15.10)(reflect-metadata@0.2.2)(sequelize@6.37.7)
+    dev: false
+
+  /@nestjs/serve-static@5.0.4(@nestjs/common@11.1.10)(@nestjs/core@11.1.10)(express@5.2.1):
+    resolution: {integrity: sha512-3kO1M9D3vsPyWPFardxIjUYeuolS58PnhCoBTkS7t3BrdZFZCKHnBZ15js+UOzOR2Q6HmD7ssGjLd0DVYVdvOw==}
+    peerDependencies:
+      '@fastify/static': ^8.0.4
+      '@nestjs/common': ^11.0.2
+      '@nestjs/core': ^11.0.2
+      express: ^5.0.1
+      fastify: ^5.2.1
+    peerDependenciesMeta:
+      '@fastify/static':
+        optional: true
+      express:
+        optional: true
+      fastify:
+        optional: true
+    dependencies:
+      '@nestjs/common': 11.1.10(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 11.1.10(@nestjs/common@11.1.10)(@nestjs/platform-express@11.1.10)(@nestjs/websockets@11.1.10)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      express: 5.2.1
+      path-to-regexp: 8.3.0
     dev: false
 
   /@nestjs/websockets@11.1.10(@nestjs/common@11.1.10)(@nestjs/core@11.1.10)(@nestjs/platform-socket.io@11.1.10)(reflect-metadata@0.2.2)(rxjs@7.8.2):

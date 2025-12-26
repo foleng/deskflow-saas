@@ -27,4 +27,16 @@ export class Agent extends Model {
     defaultValue: 5
   })
   max_chats: number;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: true
+  })
+  avatar: string;
+
+  @Column({
+    type: DataType.STRING,
+    defaultValue: 'agent'
+  })
+  role: string;
 }

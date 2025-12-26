@@ -14,12 +14,13 @@ import {
   Mail,
   Edit2,
   Trash2,
-  Upload
+  Upload as UploadIcon
 } from 'lucide-react';
-import { Input, Button, Avatar, Table, Select, Tag, App } from 'antd';
+import { Input, Button, Avatar, Table, Select, Tag, App, Upload } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import classNames from 'classnames';
 import { useAuthStore } from '../../store/useAuthStore';
+import api from '../../lib/api';
 
 // --- Types ---
 interface TeamMember {
@@ -46,6 +47,9 @@ const Settings: React.FC = () => {
   const { user, updateProfile } = useAuthStore();
   const { message } = App.useApp();
   const [loading, setLoading] = useState(false);
+  const [agents, setAgents] = useState<TeamMember[]>([]);
+  const [loadingAgents, setLoadingAgents] = useState(false);
+
   const [formState, setFormState] = useState({
     nickname: user?.nickname || '',
     password: '',
@@ -56,6 +60,33 @@ const Settings: React.FC = () => {
         setFormState(prev => ({ ...prev, nickname: user.nickname || '' }));
     }
   }, [user]);
+
+  React.useEffect(() => {
+      if (activeMenu === 'agents') {
+          fetchAgents();
+      }
+  }, [activeMenu]);
+
+  const fetchAgents = async () => {
+      setLoadingAgents(true);
+      try {
+          const res = await api.get<User[]>('/agents');
+          const mappedAgents: TeamMember[] = res.data.map(agent => ({
+              key: agent.id.toString(),
+              name: agent.nickname || 'Unknown',
+              email: agent.email || '',
+              avatar: agent.avatar?.startsWith('/uploads') ? `http://localhost:3000${agent.avatar}` : (agent.avatar || "https://i.pravatar.cc/150?u=" + agent.id),
+              role: agent.role || 'agent',
+              status: 'online' // Mock status for now
+          }));
+          setAgents(mappedAgents);
+      } catch (error) {
+          console.error(error);
+          message.error('Failed to load agents');
+      } finally {
+          setLoadingAgents(false);
+      }
+  };
 
   const handleUpdateProfile = async () => {
       setLoading(true);
@@ -182,9 +213,36 @@ const Settings: React.FC = () => {
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
              {/* Avatar */}
              <div className="flex items-center gap-4">
-               <Avatar size={80} src={user?.avatar} icon={<User size={40} />} className="bg-slate-100 text-slate-400" />
+               <Avatar 
+                  size={80} 
+                  src={user?.avatar?.startsWith('/uploads') ? `http://localhost:3000${user.avatar}` : user?.avatar} 
+                  icon={<User size={40} />} 
+                  className="bg-slate-100 text-slate-400" 
+               />
                <div>
-                 <Button icon={<Upload size={16} />}>Change Avatar</Button>
+                 <Upload 
+                    customRequest={async (options) => {
+                        const { file, onSuccess, onError } = options;
+                        const formData = new FormData();
+                        formData.append('file', file as any);
+                        
+                        try {
+                            const res = await api.post<{ url: string }>('/upload/local', formData, {
+                                headers: { 'Content-Type': 'multipart/form-data' }
+                            });
+                            await updateProfile({ avatar: res.data.url });
+                            onSuccess && onSuccess(res.data);
+                            message.success('Avatar updated successfully');
+                        } catch (err) {
+                            console.error(err);
+                            onError && onError(err as any);
+                            message.error('Failed to upload avatar');
+                        }
+                    }}
+                    showUploadList={false}
+                 >
+                    <Button icon={<UploadIcon size={16} />}>Change Avatar</Button>
+                 </Upload>
                  <p className="text-xs text-slate-400 mt-2">JPG, GIF or PNG. Max size of 800K</p>
                </div>
              </div>
@@ -255,7 +313,8 @@ const Settings: React.FC = () => {
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
              <Table 
                columns={columns} 
-               dataSource={TEAM_DATA} 
+               dataSource={agents} 
+               loading={loadingAgents}
                pagination={{ pageSize: 5 }}
              />
           </div>
