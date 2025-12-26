@@ -105,4 +105,25 @@ export class AuthService {
           throw new UnauthorizedException('Invalid or expired token');
       }
   }
+
+  async validateGoogleUser(details: { email: string; firstName: string; lastName: string; picture: string }) {
+    const agent = await this.agentService.findOneByEmail(details.email);
+    if (agent) {
+      return agent;
+    }
+    
+    // Create new agent
+    const password = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    const newAgent = await this.agentService.create({
+      email: details.email,
+      nickname: `${details.firstName} ${details.lastName}`.trim() || details.email.split('@')[0],
+      password: hashedPassword,
+      avatar: details.picture,
+      role: 'agent'
+    });
+    
+    return newAgent;
+  }
 }

@@ -155,7 +155,10 @@ const Login: React.FC = () => {
 
           {/* Social Buttons */}
           <div className="grid grid-cols-2 gap-4">
-             <button className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors font-medium text-slate-600">
+             <button 
+               onClick={() => window.location.href = 'http://localhost:3000/api/auth/google'}
+               className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors font-medium text-slate-600"
+             >
                <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
                Google
              </button>
