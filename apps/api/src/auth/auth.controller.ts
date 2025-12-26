@@ -1,5 +1,6 @@
-import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, UnauthorizedException, UseGuards, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('api')
 export class AuthController {
@@ -17,6 +18,18 @@ export class AuthController {
   @Post('agent/register')
   async register(@Body() body) {
     return this.authService.registerAgent(body);
+  }
+
+  @Get('agent/me')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@Request() req) {
+    return this.authService.getAgentProfile(req.user.id);
+  }
+
+  @Put('agent/profile')
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(@Request() req, @Body() body) {
+    return this.authService.updateAgentProfile(req.user.id, body);
   }
   
   @Post('visitor/init')

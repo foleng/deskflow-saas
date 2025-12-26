@@ -17,7 +17,15 @@ export class AgentService {
     return this.agentModel.findOne({ where: { email } });
   }
 
-  async findById(id: number): Promise<Agent> {
+  async findOne(id: number): Promise<Agent> {
     return this.agentModel.findByPk(id);
+  }
+
+  async update(id: number, data: Partial<Agent>) {
+    const [numberOfAffectedRows, [updatedAgent]] = await this.agentModel.update(data, {
+      where: { id },
+      returning: true,
+    });
+    return { numberOfAffectedRows, updatedAgent };
   }
 }

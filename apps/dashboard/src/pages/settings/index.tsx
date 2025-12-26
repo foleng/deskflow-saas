@@ -11,14 +11,15 @@ import {
   Webhook,
   Search,
   Plus,
-  MoreHorizontal,
   Mail,
   Edit2,
-  Trash2
+  Trash2,
+  Upload
 } from 'lucide-react';
-import { Input, Button, Avatar, Table, Select, Tag, Dropdown } from 'antd';
+import { Input, Button, Avatar, Table, Select, Tag, App } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import classNames from 'classnames';
+import { useAuthStore } from '../../store/useAuthStore';
 
 // --- Types ---
 interface TeamMember {
@@ -41,6 +42,37 @@ const TEAM_DATA: TeamMember[] = [
 const Settings: React.FC = () => {
   const { t } = useTranslation();
   const [activeMenu, setActiveMenu] = useState('agents');
+  
+  const { user, updateProfile } = useAuthStore();
+  const { message } = App.useApp();
+  const [loading, setLoading] = useState(false);
+  const [formState, setFormState] = useState({
+    nickname: user?.nickname || '',
+    password: '',
+  });
+
+  React.useEffect(() => {
+    if (user) {
+        setFormState(prev => ({ ...prev, nickname: user.nickname || '' }));
+    }
+  }, [user]);
+
+  const handleUpdateProfile = async () => {
+      setLoading(true);
+      try {
+          await updateProfile({
+              nickname: formState.nickname,
+              password: formState.password || undefined
+          });
+          message.success('Profile updated successfully');
+          setFormState(prev => ({ ...prev, password: '' }));
+      } catch (error) {
+          console.error(error);
+          message.error('Failed to update profile');
+      } finally {
+          setLoading(false);
+      }
+  };
 
   // --- Sub-Sidebar Menu Configuration ---
   const MENU_SECTIONS = [
@@ -139,6 +171,55 @@ const Settings: React.FC = () => {
 
   // --- Render Content Area ---
   const renderContent = () => {
+    if (activeMenu === 'profile') {
+      return (
+        <div className="max-w-2xl space-y-6 animate-in fade-in duration-500">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">{t('settings.menu.profile')}</h2>
+            <p className="text-slate-500 mt-1">Manage your account information</p>
+          </div>
+          
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
+             {/* Avatar */}
+             <div className="flex items-center gap-4">
+               <Avatar size={80} src={user?.avatar} icon={<User size={40} />} className="bg-slate-100 text-slate-400" />
+               <div>
+                 <Button icon={<Upload size={16} />}>Change Avatar</Button>
+                 <p className="text-xs text-slate-400 mt-2">JPG, GIF or PNG. Max size of 800K</p>
+               </div>
+             </div>
+
+             <div className="grid grid-cols-1 gap-6">
+               <div>
+                 <label className="block text-sm font-medium text-slate-700 mb-1">Nickname</label>
+                 <Input 
+                    value={formState.nickname} 
+                    onChange={(e) => setFormState(prev => ({ ...prev, nickname: e.target.value }))} 
+                 />
+               </div>
+               <div>
+                 <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                 <Input value={user?.email} disabled />
+                 <p className="text-xs text-slate-400 mt-1">Contact admin to change email</p>
+               </div>
+               <div>
+                 <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
+                 <Input.Password 
+                    placeholder="Leave blank to keep current"
+                    value={formState.password}
+                    onChange={(e) => setFormState(prev => ({ ...prev, password: e.target.value }))}
+                 />
+               </div>
+             </div>
+             
+             <div className="pt-4 border-t border-slate-100 flex justify-end">
+               <Button type="primary" loading={loading} onClick={handleUpdateProfile}>Save Changes</Button>
+             </div>
+          </div>
+        </div>
+      );
+    }
+
     if (activeMenu === 'agents') {
       return (
         <div className="space-y-6 animate-in fade-in duration-500">

@@ -1,33 +1,35 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, MessageSquare, BarChart2, ArrowRight } from 'lucide-react';
+import { Mail, Lock, MessageSquare, BarChart2, ArrowRight, User } from 'lucide-react';
 import { Input, Button, App } from 'antd';
 import { useAuthStore } from '../../store/useAuthStore';
 
-const Login: React.FC = () => {
+const Register: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { message } = App.useApp();
-  const login = useAuthStore((state) => state.login);
+  const register = useAuthStore((state) => state.register);
+  
+  const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      message.error(t('auth.login.error.required', 'Please enter email and password'));
+  const handleRegister = async () => {
+    if (!nickname || !email || !password) {
+      message.error(t('auth.register.error.required', 'Please fill in all fields'));
       return;
     }
 
     setLoading(true);
     try {
-      await login({ email, password });
-      message.success(t('auth.login.success', 'Login successful'));
-      navigate('/');
+      await register({ nickname, email, password });
+      message.success(t('auth.register.success', 'Registration successful. Please login.'));
+      navigate('/login');
     } catch (error) {
       console.error(error);
-      message.error(t('auth.login.error.invalid', 'Invalid email or password'));
+      message.error(t('auth.register.error.failed', 'Registration failed. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -57,10 +59,10 @@ const Login: React.FC = () => {
 
         <div className="relative z-10 mb-12">
            <h1 className="text-5xl font-bold leading-tight mb-6 max-w-2xl">
-             {t('auth.hero.title')}
+             {t('auth.hero.title', 'Customer Service Reimagined')}
            </h1>
            <p className="text-primary-100 text-lg max-w-xl leading-relaxed">
-             {t('auth.hero.desc')}
+             {t('auth.hero.desc', 'Join thousands of businesses using DeskFlow to deliver exceptional support experiences.')}
            </p>
         </div>
 
@@ -83,7 +85,7 @@ const Login: React.FC = () => {
         </div>
       </div>
 
-      {/* --- Right Column: Login Form (40% Width) --- */}
+      {/* --- Right Column: Register Form (40% Width) --- */}
       <div className="w-full lg:w-[45%] bg-white flex flex-col justify-center items-center p-8 lg:p-24 relative">
         
         {/* Mobile Logo (Visible only on small screens) */}
@@ -97,88 +99,74 @@ const Login: React.FC = () => {
         <div className="w-full max-w-md space-y-8">
           {/* Header */}
           <div className="text-center lg:text-left">
-            <h2 className="text-3xl font-bold text-slate-900">{t('auth.login.title')}</h2>
-            <p className="text-slate-500 mt-2">{t('auth.login.subtitle')}</p>
+            <h2 className="text-3xl font-bold text-slate-900">{t('auth.register.title', 'Create Account')}</h2>
+            <p className="mt-2 text-slate-500">
+              {t('auth.register.subtitle', 'Sign up to get started')}
+            </p>
           </div>
 
-          {/* Form */}
           <div className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('auth.login.email')}</label>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-slate-700 block ml-1">{t('auth.register.nickname', 'Nickname')}</label>
               <Input 
                 size="large" 
-                prefix={<Mail size={18} className="text-slate-400 mr-2" />} 
-                placeholder={t('auth.login.placeholder.email')} 
-                className="h-12 rounded-lg border-slate-300"
+                prefix={<User className="text-slate-400 mr-2" size={18} />} 
+                placeholder={t('auth.register.nickname.placeholder', 'Your Nickname')}
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                className="rounded-xl py-2.5 border-slate-200 hover:border-primary-400 focus:border-primary-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-slate-700 block ml-1">{t('auth.login.email', 'Email Address')}</label>
+              <Input 
+                size="large" 
+                prefix={<Mail className="text-slate-400 mr-2" size={18} />} 
+                placeholder={t('auth.login.email.placeholder', 'name@company.com')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="rounded-xl py-2.5 border-slate-200 hover:border-primary-400 focus:border-primary-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-slate-700 block ml-1">{t('auth.login.password', 'Password')}</label>
+              <Input.Password 
+                size="large" 
+                prefix={<Lock className="text-slate-400 mr-2" size={18} />} 
+                placeholder={t('auth.login.password.placeholder', '••••••••')}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="rounded-xl py-2.5 border-slate-200 hover:border-primary-400 focus:border-primary-500"
               />
             </div>
             
-            <div>
-              <div className="flex justify-between items-center mb-1.5">
-                <label className="block text-sm font-medium text-slate-700">{t('auth.login.password')}</label>
-                <a href="#" className="text-sm font-semibold text-primary-600 hover:text-primary-500">{t('auth.login.forgot')}</a>
-              </div>
-              <Input.Password 
-                size="large" 
-                prefix={<Lock size={18} className="text-slate-400 mr-2" />} 
-                placeholder="••••••••" 
-                className="h-12 rounded-lg border-slate-300"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-
             <Button 
               type="primary" 
               size="large" 
               block 
-              onClick={handleLogin}
+              onClick={handleRegister} 
               loading={loading}
-              className="h-12 bg-primary-600 hover:bg-primary-500 font-bold text-base rounded-lg mt-2 shadow-lg shadow-primary-600/30 flex items-center justify-center gap-2 group"
+              className="h-12 text-base font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-600/30 border-none mt-4"
             >
-              {t('auth.login.submit')}
-              {!loading && <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
+              <div className="flex items-center justify-center gap-2">
+                {t('auth.register.submit', 'Create Account')}
+                <ArrowRight size={18} />
+              </div>
             </Button>
           </div>
 
-          {/* Divider */}
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-slate-400 font-medium tracking-wider text-xs uppercase">{t('auth.login.or')}</span>
-            </div>
+          <div className="text-center text-sm text-slate-500">
+            {t('auth.register.has_account', 'Already have an account?')}
+            <button onClick={() => navigate('/login')} className="ml-2 font-semibold text-primary-600 hover:text-primary-700 hover:underline transition-all">
+              {t('auth.login.submit', 'Sign in')}
+            </button>
           </div>
-
-          {/* Social Buttons */}
-          <div className="grid grid-cols-2 gap-4">
-             <button className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors font-medium text-slate-600">
-               <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-               Google
-             </button>
-             <button className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors font-medium text-slate-600">
-               <img src="https://www.svgrepo.com/show/355117/microsoft.svg" className="w-5 h-5" alt="Microsoft" />
-               Microsoft
-             </button>
-          </div>
-
-          {/* Footer */}
-          <p className="text-center text-sm text-slate-500 mt-8">
-            {t('auth.login.noAccount')} <button onClick={() => navigate('/register')} className="font-bold text-primary-600 hover:text-primary-500">{t('auth.login.signup')}</button>
-          </p>
         </div>
-
-        {/* Support Link */}
-        <div className="absolute bottom-6 text-xs text-slate-400 flex items-center gap-1 cursor-pointer hover:text-slate-600">
-          <span>Need help? Contact Support</span>
-        </div>
-
       </div>
     </div>
   );
 };
 
-export default Login;
+export default Register;

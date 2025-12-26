@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Mail, Phone, MapPin, ExternalLink, Clock, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, CheckCircle2 } from 'lucide-react';
 import { Avatar, Button } from 'antd';
 
 const RightSidebar: React.FC = () => {

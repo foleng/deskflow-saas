@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, Filter, SlidersHorizontal } from 'lucide-react'
-import { Input, Avatar, Badge, Segmented, Empty } from 'antd'
+import { Search, SlidersHorizontal } from 'lucide-react'
+import { Input, Avatar, Segmented } from 'antd'
 import classNames from 'classnames'
 
 import ChatArea from './components/ChatArea'

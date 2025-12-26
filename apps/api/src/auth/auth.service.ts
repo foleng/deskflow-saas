@@ -36,6 +36,17 @@ export class AuthService {
     });
     return { success: true, agentId: agent.id };
   }
+
+  async getAgentProfile(id: number) {
+    const agent = await this.agentService.findOne(id);
+    if (!agent) return null;
+    return {
+      id: agent.id,
+      nickname: agent.nickname,
+      email: agent.email,
+      role: 'agent'
+    };
+  }
   
   async visitorInit(uuid: string) {
      const payload = { id: uuid, role: 'visitor' };
@@ -43,5 +54,22 @@ export class AuthService {
          success: true,
          token: this.jwtService.sign(payload, { expiresIn: '7d' })
      };
+  }
+
+  async updateAgentProfile(id: number, body: any) {
+    if (body.password) {
+      body.password = await bcrypt.hash(body.password, 10);
+    }
+    await this.agentService.update(id, body);
+    const updated = await this.agentService.findOne(id);
+    return {
+      success: true,
+      agent: {
+        id: updated.id,
+        nickname: updated.nickname,
+        email: updated.email,
+        role: 'agent'
+      }
+    };
   }
 }

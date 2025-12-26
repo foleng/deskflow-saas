@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 export interface SidebarItem {
   key: string;
@@ -9,7 +9,7 @@ export interface SidebarItem {
 
 export interface User {
   id: string;
-  name: string;
+  nickname: string;
   email: string;
   avatar?: string;
 }

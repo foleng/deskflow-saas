@@ -5,11 +5,19 @@ import { LogOut, Globe } from 'lucide-react'; // 新增 Globe 图标
 import { Avatar, Dropdown } from 'antd'; // 引入 Dropdown 用于切换语言
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next'; // <--- 引入 Hook
+import { useAuthStore } from '../../store/useAuthStore';
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation(); // <--- 获取 t 函数和 i18n 实例
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   // 语言切换菜单项
   const languageItems = [
@@ -48,9 +56,9 @@ const Sidebar: React.FC = () => {
       {/* 2. User Profile */}
       <div className="px-4 py-6">
         <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:border-primary-200 transition-colors">
-          <Avatar src="https://i.pravatar.cc/150?u=agent" size="large" className="border-2 border-white shadow-sm" />
+          <Avatar src={user?.avatar || "https://i.pravatar.cc/150?u=agent"} size="large" className="border-2 border-white shadow-sm" />
           <div className="flex flex-col overflow-hidden">
-            <span className="text-sm font-semibold text-slate-900 truncate">Agent Smith</span>
+            <span className="text-sm font-semibold text-slate-900 truncate">{user?.nickname || 'Agent'}</span>
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-green-500"></span>
               <span className="text-xs text-slate-500">{t('status.online')}</span>
@@ -105,7 +113,7 @@ const Sidebar: React.FC = () => {
 
       {/* 4. Logout */}
       <div className="p-4 border-t border-slate-100">
-        <button onClick={() => navigate('/login')} className="flex items-center gap-3 px-4 py-3 w-full text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors group">
+        <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 w-full text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors group">
           <LogOut size={20} className="text-slate-400 group-hover:text-red-500" />
           <span className="font-medium text-sm">{t('menu.logout')}</span>
         </button>

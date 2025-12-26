@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MoreVertical, CheckCircle, Paperclip, Send, Smile, Clock } from 'lucide-react';
-import { Avatar, Button, Dropdown } from 'antd';
+import { Avatar, Button } from 'antd';
 import classNames from 'classnames';
 
 const MESSAGES = [
