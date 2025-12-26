@@ -37,4 +37,14 @@ export class AuthController {
       if (!body.v_uuid) throw new UnauthorizedException('UUID required');
       return this.authService.visitorInit(body.v_uuid);
   }
+
+  @Post('agent/forgot-password')
+  async forgotPassword(@Body() body) {
+      return this.authService.forgotPassword(body.email);
+  }
+
+  @Post('agent/reset-password')
+  async resetPassword(@Body() body) {
+      return this.authService.resetPassword(body.token, body.newPassword);
+  }
 }

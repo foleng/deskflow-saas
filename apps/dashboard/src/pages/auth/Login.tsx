@@ -118,7 +118,7 @@ const Login: React.FC = () => {
             <div>
               <div className="flex justify-between items-center mb-1.5">
                 <label className="block text-sm font-medium text-slate-700">{t('auth.login.password')}</label>
-                <a href="#" className="text-sm font-semibold text-primary-600 hover:text-primary-500">{t('auth.login.forgot')}</a>
+                <button onClick={() => navigate('/forgot-password')} className="text-sm font-semibold text-primary-600 hover:text-primary-500">{t('auth.login.forgot')}</button>
               </div>
               <Input.Password 
                 size="large" 

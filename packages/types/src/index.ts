@@ -25,6 +25,15 @@ export interface UpdateProfileDto {
   avatar?: string;
 }
 
+export interface ForgotPasswordDto {
+  email: string;
+}
+
+export interface ResetPasswordDto {
+  token: string;
+  newPassword: string;
+}
+
 export interface AuthResponse {
     success: boolean;
     token: string;

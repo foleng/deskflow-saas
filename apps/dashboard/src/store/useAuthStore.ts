@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { User, LoginDto, RegisterDto, AuthResponse } from '@repo/types';
+import type { User, LoginDto, RegisterDto, UpdateProfileDto, AuthResponse } from '@repo/types';
 import api from '../lib/api';
 
 interface AuthState {
@@ -7,6 +7,7 @@ interface AuthState {
   isAuthenticated: boolean;
   login: (data: LoginDto) => Promise<void>;
   register: (data: RegisterDto) => Promise<void>;
+  updateProfile: (data: UpdateProfileDto) => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<void>;
 }

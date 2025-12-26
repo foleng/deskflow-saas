@@ -72,4 +72,36 @@ export class AuthService {
       }
     };
   }
+
+  async forgotPassword(email: string) {
+    const agent = await this.agentService.findOneByEmail(email);
+    if (!agent) {
+        // For security, don't reveal if email exists, but for now we just return success
+        return { success: true, message: 'If email exists, reset link sent.' };
+    }
+
+    const payload = { id: agent.id, type: 'reset' };
+    const token = this.jwtService.sign(payload, { expiresIn: '1h' });
+    
+    // MOCK EMAIL SENDING
+    console.log(`[MOCK EMAIL] Reset Password Link for ${email}: http://localhost:5173/reset-password?token=${token}`);
+
+    return { success: true, message: 'Reset link sent' };
+  }
+
+  async resetPassword(token: string, newPass: string) {
+      try {
+          const payload = this.jwtService.verify(token);
+          if (payload.type !== 'reset') {
+              throw new UnauthorizedException('Invalid token type');
+          }
+          
+          const hashedPassword = await bcrypt.hash(newPass, 10);
+          await this.agentService.update(payload.id, { password: hashedPassword });
+          
+          return { success: true, message: 'Password updated successfully' };
+      } catch (e) {
+          throw new UnauthorizedException('Invalid or expired token');
+      }
+  }
 }
