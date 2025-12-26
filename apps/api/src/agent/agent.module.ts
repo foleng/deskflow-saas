@@ -3,9 +3,13 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { Agent } from './agent.model';
 import { AgentService } from './agent.service';
 import { AgentController } from './agent.controller';
+import { CaslModule } from '../casl/casl.module';
 
 @Module({
-  imports: [SequelizeModule.forFeature([Agent])],
+  imports: [
+    SequelizeModule.forFeature([Agent]),
+    CaslModule
+  ],
   controllers: [AgentController],
   providers: [AgentService],
   exports: [AgentService],

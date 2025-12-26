@@ -11,6 +11,7 @@ import { RedisModule } from './common/redis/redis.module';
 
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { RoleModule } from './role/role.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { join } from 'path';
     UploadModule,
     ConversationModule,
     RedisModule,
+    RoleModule,
   ],
 })
 export class AppModule {}

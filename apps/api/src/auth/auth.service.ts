@@ -44,7 +44,7 @@ export class AuthService {
       id: agent.id,
       nickname: agent.nickname,
       email: agent.email,
-      role: 'agent'
+      role: agent.role
     };
   }
   

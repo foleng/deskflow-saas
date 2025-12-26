@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   User, 
@@ -16,7 +16,7 @@ import {
   Trash2,
   Upload as UploadIcon
 } from 'lucide-react';
-import { Input, Button, Avatar, Table, Select, Tag, App, Upload } from 'antd';
+import { Input, Button, Avatar, Table, Select, Tag, App, Upload, Modal, Form, Checkbox, Row, Col, Card } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import classNames from 'classnames';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -28,17 +28,23 @@ interface TeamMember {
   name: string;
   email: string;
   avatar: string;
-  role: 'admin' | 'agent' | 'viewer';
+  role: string;
   status: 'online' | 'away' | 'invited';
 }
 
-// --- Mock Data ---
-const TEAM_DATA: TeamMember[] = [
-  { key: '1', name: 'Alice Smith', email: 'alice@company.com', avatar: 'https://i.pravatar.cc/150?u=alice', role: 'admin', status: 'online' },
-  { key: '2', name: 'Bob Jones', email: 'bob@company.com', avatar: 'https://i.pravatar.cc/150?u=bob', role: 'agent', status: 'away' },
-  { key: '3', name: 'Charlie Day', email: 'charlie@company.com', avatar: 'https://i.pravatar.cc/150?u=charlie', role: 'agent', status: 'online' },
-  { key: '4', name: 'Dana Lee', email: 'dana@company.com', avatar: 'https://i.pravatar.cc/150?u=dana', role: 'viewer', status: 'invited' },
-];
+interface Permission {
+  action: string;
+  subject: string;
+}
+
+interface Role {
+  id: number;
+  name: string;
+  description: string;
+  permissions: Permission[];
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 const Settings: React.FC = () => {
   const { t } = useTranslation();
@@ -49,28 +55,40 @@ const Settings: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [agents, setAgents] = useState<TeamMember[]>([]);
   const [loadingAgents, setLoadingAgents] = useState(false);
+  
+  // Roles State
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+  const [isRoleModalVisible, setIsRoleModalVisible] = useState(false);
+  const [currentRole, setCurrentRole] = useState<Role | null>(null);
+  const [roleForm] = Form.useForm();
 
   const [formState, setFormState] = useState({
     nickname: user?.nickname || '',
     password: '',
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (user) {
         setFormState(prev => ({ ...prev, nickname: user.nickname || '' }));
     }
   }, [user]);
 
-  React.useEffect(() => {
+  useEffect(() => {
       if (activeMenu === 'agents') {
           fetchAgents();
+          fetchRoles(); // Need roles for the dropdown
+      }
+      if (activeMenu === 'roles') {
+          fetchRoles();
+          fetchAgents(); // Need agents for count
       }
   }, [activeMenu]);
 
   const fetchAgents = async () => {
       setLoadingAgents(true);
       try {
-          const res = await api.get<User[]>('/agents');
+          const res = await api.get<any[]>('/agents');
           const mappedAgents: TeamMember[] = res.data.map(agent => ({
               key: agent.id.toString(),
               name: agent.nickname || 'Unknown',
@@ -86,6 +104,98 @@ const Settings: React.FC = () => {
       } finally {
           setLoadingAgents(false);
       }
+  };
+
+  const fetchRoles = async () => {
+      setLoadingRoles(true);
+      try {
+          const res = await api.get<Role[]>('/roles');
+          setRoles(res.data);
+      } catch (error) {
+          console.error(error);
+          message.error('Failed to load roles');
+      } finally {
+          setLoadingRoles(false);
+      }
+  };
+
+  const handleUpdateRole = async (id: string, newRole: string) => {
+    try {
+      await api.put(`/agents/${id}`, { role: newRole });
+      message.success('Role updated successfully');
+      fetchAgents(); 
+    } catch (error) {
+      console.error(error);
+      message.error('Failed to update role');
+    }
+  };
+
+  const handleSaveRole = async () => {
+      try {
+          const values = await roleForm.validateFields();
+          // Transform permissions from form values
+          const permissions: Permission[] = [];
+          
+          if (values.isAdmin) {
+              permissions.push({ action: 'manage', subject: 'all' });
+          } else {
+              Object.keys(values).forEach(key => {
+                  if (key.startsWith('perm_') && values[key]) {
+                      const [, subject, action] = key.split('_');
+                      permissions.push({ action, subject });
+                  }
+              });
+              // Always add basic read access
+              permissions.push({ action: 'read', subject: 'all' });
+          }
+
+          const roleData = {
+              name: values.name,
+              description: values.description,
+              permissions
+          };
+
+          if (currentRole) {
+              await api.put(`/roles/${currentRole.id}`, roleData);
+              message.success('Role updated');
+          } else {
+              await api.post('/roles', roleData);
+              message.success('Role created');
+          }
+          setIsRoleModalVisible(false);
+          fetchRoles();
+      } catch (error) {
+          console.error(error);
+          message.error('Failed to save role');
+      }
+  };
+
+  const handleDeleteRole = async (id: number) => {
+      try {
+          await api.delete(`/roles/${id}`);
+          message.success('Role deleted');
+          fetchRoles();
+      } catch (error) {
+          message.error('Cannot delete system roles or role in use');
+      }
+  };
+
+  const openRoleModal = (role: Role | null) => {
+      setCurrentRole(role);
+      if (role) {
+          const initialValues: any = {
+              name: role.name,
+              description: role.description,
+              isAdmin: role.permissions.some(p => p.action === 'manage' && p.subject === 'all')
+          };
+          role.permissions.forEach(p => {
+              initialValues[`perm_${p.subject}_${p.action}`] = true;
+          });
+          roleForm.setFieldsValue(initialValues);
+      } else {
+          roleForm.resetFields();
+      }
+      setIsRoleModalVisible(true);
   };
 
   const handleUpdateProfile = async () => {
@@ -160,13 +270,21 @@ const Settings: React.FC = () => {
       title: t('settings.team.columns.role'),
       dataIndex: 'role',
       key: 'role',
-      render: (role) => {
-        let color = 'default';
-        let label = role;
-        if (role === 'admin') { color = 'purple'; label = t('settings.team.roles.admin'); }
-        if (role === 'agent') { color = 'blue'; label = t('settings.team.roles.agent'); }
-        if (role === 'viewer') { color = 'orange'; label = t('settings.team.roles.viewer'); }
-        return <Tag color={color} className="border-0 px-2 py-0.5 rounded-md font-medium capitalize">{label}</Tag>;
+      render: (role, record) => {
+        const isAdmin = user?.role === 'admin';
+        
+        if (!isAdmin) {
+            return <Tag color="blue" className="capitalize">{role}</Tag>;
+        }
+
+        return (
+            <Select 
+                defaultValue={role} 
+                style={{ width: 140 }} 
+                onChange={(value) => handleUpdateRole(record.key, value)}
+                options={roles.map(r => ({ value: r.name, label: r.name }))}
+            />
+        );
       }
     },
     {
@@ -177,7 +295,7 @@ const Settings: React.FC = () => {
         <div className="flex items-center gap-2">
            <div className={classNames("w-2 h-2 rounded-full", {
              'bg-green-500': status === 'online',
-             'bg-slate-300': status === 'away', // 这里把 away 改成灰色，因为设计图中 invited 也是斜体
+             'bg-slate-300': status === 'away',
              'border border-slate-300 bg-white': status === 'invited'
            })}></div>
            <span className={classNames("capitalize text-sm", {
@@ -331,6 +449,111 @@ const Settings: React.FC = () => {
           </div>
         </div>
       );
+    }
+
+    if (activeMenu === 'roles') {
+        const roleColumns = [
+            { title: 'Role', dataIndex: 'name', key: 'name', render: (text: string) => <span className="font-bold capitalize">{text}</span> },
+            { title: 'Description', dataIndex: 'description', key: 'description' },
+            { title: 'Users', key: 'users', render: (_: any, record: Role) => {
+                const count = agents.filter(a => a.role === record.name).length;
+                return <Tag color="blue">{count} Users</Tag>;
+            }},
+            { 
+                title: 'Action', 
+                key: 'action', 
+                render: (_: any, record: Role) => (
+                    <div className="flex gap-2">
+                        <Button type="link" size="small" onClick={() => openRoleModal(record)}>Edit</Button>
+                        {!['admin', 'agent'].includes(record.name) && (
+                            <Button type="link" danger size="small" onClick={() => handleDeleteRole(record.id)}>Delete</Button>
+                        )}
+                    </div>
+                )
+            }
+        ];
+
+        return (
+          <div className="space-y-6 animate-in fade-in duration-500">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">{t('settings.menu.roles')}</h2>
+                <p className="text-slate-500 mt-1">View and manage system roles and permissions.</p>
+              </div>
+              <Button type="primary" icon={<Plus size={18} />} onClick={() => openRoleModal(null)}>
+                  Create Role
+              </Button>
+            </div>
+            
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+               <Table 
+                 columns={roleColumns} 
+                 dataSource={roles} 
+                 rowKey="id"
+                 loading={loadingRoles}
+                 pagination={false}
+               />
+            </div>
+
+            <Modal
+                title={currentRole ? "Edit Role" : "Create Role"}
+                open={isRoleModalVisible}
+                onOk={handleSaveRole}
+                onCancel={() => setIsRoleModalVisible(false)}
+                width={700}
+            >
+                <Form form={roleForm} layout="vertical">
+                    <Form.Item name="name" label="Role Name" rules={[{ required: true }]}>
+                        <Input disabled={currentRole && ['admin', 'agent'].includes(currentRole.name)} />
+                    </Form.Item>
+                    <Form.Item name="description" label="Description">
+                        <Input.TextArea />
+                    </Form.Item>
+                    
+                    <Form.Item name="isAdmin" valuePropName="checked">
+                        <Checkbox onChange={(e) => {
+                            if (e.target.checked) {
+                                // Clear other permissions if admin is selected (Admin implies all)
+                            }
+                        }}>
+                            <span className="font-bold">Administrator Access (Full Permissions)</span>
+                        </Checkbox>
+                    </Form.Item>
+
+                    <Form.Item shouldUpdate={(prev, curr) => prev.isAdmin !== curr.isAdmin}>
+                        {({ getFieldValue }) => {
+                            const isAdmin = getFieldValue('isAdmin');
+                            if (isAdmin) return <div className="text-slate-500">Administrators have full access to all resources.</div>;
+
+                            return (
+                                <div className="space-y-4">
+                                    <h4 className="font-medium border-b pb-2">Permissions</h4>
+                                    
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Card title="Agents" size="small">
+                                            <Form.Item name="perm_Agent_create" valuePropName="checked" noStyle><Checkbox>Create Agents</Checkbox></Form.Item><br/>
+                                            <Form.Item name="perm_Agent_update" valuePropName="checked" noStyle><Checkbox>Update Agents</Checkbox></Form.Item><br/>
+                                            <Form.Item name="perm_Agent_delete" valuePropName="checked" noStyle><Checkbox>Delete Agents</Checkbox></Form.Item>
+                                        </Card>
+                                        <Card title="Roles" size="small">
+                                            <Form.Item name="perm_Role_create" valuePropName="checked" noStyle><Checkbox>Create Roles</Checkbox></Form.Item><br/>
+                                            <Form.Item name="perm_Role_update" valuePropName="checked" noStyle><Checkbox>Update Roles</Checkbox></Form.Item><br/>
+                                            <Form.Item name="perm_Role_delete" valuePropName="checked" noStyle><Checkbox>Delete Roles</Checkbox></Form.Item>
+                                        </Card>
+                                        {/* Add more resources as needed */}
+                                    </div>
+                                </div>
+                            );
+                        }}
+                    </Form.Item>
+                </Form>
+            </Modal>
+            
+            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-blue-800 text-sm">
+                <p><strong>Note:</strong> Custom permissions allow fine-grained access control.</p>
+            </div>
+          </div>
+        );
     }
 
     return (
