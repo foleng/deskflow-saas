@@ -14,7 +14,7 @@ interface ChatStore {
   // Actions
   fetchConversations: () => Promise<void>;
   selectConversation: (id: string) => Promise<void>;
-  sendMessage: (content: string, type?: 'text' | 'image') => Promise<void>;
+  sendMessage: (content: string, type?: 'text' | 'image' | 'file' | 'audio', meta?: any) => Promise<void>;
   connectSocket: (token: string) => void;
   disconnectSocket: () => void;
   receiveMessage: (message: any) => void;
@@ -56,6 +56,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   selectConversation: async (id: string) => {
     set({ activeConversationId: id, isLoadingMessages: true, messages: [] });
+
+    // Join socket room
+    const { socket } = get();
+    if (socket) {
+      socket.emit('join_conversation', { conversationId: id });
+    }
+
     try {
       const res = await api.get(`/conversations/${id}/messages`);
       if (res.data.success) {
@@ -67,6 +74,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           content: m.content.data,
           type: m.content.type,
           timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          meta: m.content.meta, // Added meta mapping
+          fileName: m.content.meta?.fileName,
+          size: m.content.meta?.fileSize,
         }));
         set({ messages: mappedMessages });
       }
@@ -77,7 +87,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     }
   },
 
-  sendMessage: async (content: string, type = 'text') => {
+  sendMessage: async (content: string, type = 'text', meta?: any) => {
     const { activeConversationId, socket } = get();
     if (!activeConversationId || !socket) return;
 
@@ -87,6 +97,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         conversationId: activeConversationId,
         content,
         contentType: type,
+        meta,
       }, (response: any) => {
         if (response && response.status === 'ok') {
           const m = response.data;
@@ -98,6 +109,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             content: m.content.data,
             type: m.content.type,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            meta: m.content.meta,
+            fileName: m.content.meta?.fileName,
+            size: m.content.meta?.fileSize,
           };
           set((state) => ({ messages: [...state.messages, newMessage] }));
         }
@@ -152,6 +166,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             content: m.content.data,
             type: m.content.type,
             timestamp: new Date(m.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            meta: m.content.meta,
+            fileName: m.content.meta?.fileName,
+            size: m.content.meta?.fileSize,
         } as any; // Cast to any to match loose types if needed
         
         set({ messages: [...messages, newMessage] });

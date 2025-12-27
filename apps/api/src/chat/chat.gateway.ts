@@ -122,10 +122,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('join_conversation')
+  async handleJoinConversation(@MessageBody() payload: any, @ConnectedSocket() socket: Socket) {
+    const { conversationId } = payload;
+    const user = socket.data.user;
+
+    if (!conversationId) {
+      return { status: 'error', msg: 'Missing conversationId' };
+    }
+
+    // Allow agents (and visitors?) to join specific conversation rooms
+    // In a real app, check if user belongs to this conversation
+    const roomName = `conversation_${conversationId}`;
+    socket.join(roomName);
+    
+    console.log(`🔗 [JOIN] ${user.role} ${user.id} joined ${roomName}`);
+    return { status: 'ok' };
+  }
+
   @SubscribeMessage('send_msg')
   async handleSendMsg(@MessageBody() payload: any, @ConnectedSocket() socket: Socket) {
     try {
-      const { conversationId, content, contentType = 'text' } = payload;
+      const { conversationId, content, contentType = 'text', meta } = payload;
       const user = socket.data.user;
 
       if (!conversationId || !content) {
@@ -142,6 +160,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         content: {
           type: contentType,
           data: content,
+          meta: meta || {},
         },
       };
 

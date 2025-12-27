@@ -5,9 +5,10 @@ export interface Message {
   senderName?: string; // Added
   content: string;
   timestamp: string;
-  type: 'text' | 'image' | 'file' | 'system'; // 支持系统消息
+  type: 'text' | 'image' | 'file' | 'audio' | 'system'; // 支持系统消息
   fileName?: string;
   size?: string; // Added
+  meta?: any; // Added for flexible metadata
 }
 
 export interface Conversation {

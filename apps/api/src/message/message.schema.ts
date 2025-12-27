@@ -18,11 +18,14 @@ export const SenderSchema = SchemaFactory.createForClass(Sender);
 
 @Schema({ _id: false })
 export class Content {
-  @Prop({ type: String, enum: ['text', 'image'], default: 'text' })
+  @Prop({ type: String, enum: ['text', 'image', 'file', 'audio'], default: 'text' })
   type: string;
 
   @Prop({ type: String, required: true })
   data: string;
+
+  @Prop({ type: Object, required: false })
+  meta?: Record<string, any>;
 }
 export const ContentSchema = SchemaFactory.createForClass(Content);
 
