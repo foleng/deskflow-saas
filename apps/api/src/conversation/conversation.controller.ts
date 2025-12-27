@@ -13,6 +13,29 @@ export class ConversationController {
     @InjectMongooseModel(Message.name) private messageModel: Model<Message>,
   ) {}
 
+  @Get('my')
+  @UseGuards(JwtAuthGuard)
+  async getMyConversations(@Request() req) {
+    const user = req.user;
+    
+    let whereClause: any = {};
+    if (user.role === 'agent') {
+      whereClause.agent_id = user.id;
+    } else if (user.role === 'visitor') {
+      whereClause.visitor_uuid = user.id;
+    }
+
+    const conversations = await this.conversationModel.findAll({
+      where: whereClause,
+      order: [['updatedAt', 'DESC']],
+    });
+
+    return {
+      success: true,
+      data: conversations,
+    };
+  }
+
   @Get(':conversationId/messages')
   @UseGuards(JwtAuthGuard)
   async getMessages(

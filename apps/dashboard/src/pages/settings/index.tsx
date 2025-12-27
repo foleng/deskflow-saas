@@ -16,7 +16,7 @@ import {
   Trash2,
   Upload as UploadIcon
 } from 'lucide-react';
-import { Input, Button, Avatar, Table, Select, Tag, App, Upload, Modal, Form, Checkbox, Row, Col, Card } from 'antd';
+import { Input, Button, Avatar, Table, Select, Tag, App, Upload, Modal, Form, Checkbox, Card } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import classNames from 'classnames';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -504,7 +504,7 @@ const Settings: React.FC = () => {
             >
                 <Form form={roleForm} layout="vertical">
                     <Form.Item name="name" label="Role Name" rules={[{ required: true }]}>
-                        <Input disabled={currentRole && ['admin', 'agent'].includes(currentRole.name)} />
+                        <Input disabled={!!(currentRole && ['admin', 'agent'].includes(currentRole.name))} />
                     </Form.Item>
                     <Form.Item name="description" label="Description">
                         <Input.TextArea />
