@@ -53,16 +53,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       console.log(`🔌 [${role.toUpperCase()}] ${nickname || id} Connected (SocketID: ${socketId})`);
 
-      const EXPIRE_TIME = 30;
+      const EXPIRE_TIME = 60; // 60 seconds for heartbeat
 
       if (role === 'agent') {
         const key = `im:agent:${id}`;
+        
+        // Check if agent already exists in Redis to preserve currentChats
+        const existingAgent = await this.redisClient.hgetall(key);
+        const currentChats = existingAgent?.currentChats ? existingAgent.currentChats : 0;
+
         await this.redisClient.hset(key, {
           id,
           nickname,
           socketId,
           status: 'idle',
-          currentChats: 0,
+          currentChats: currentChats,
         });
         await this.redisClient.expire(key, EXPIRE_TIME);
         await this.redisClient.sadd('im:agents:online', id);
@@ -87,6 +92,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleDisconnect(socket: Socket) {
     // Optional: Cleanup immediately or let Redis expire
     console.log(`Client disconnected: ${socket.id}`);
+  }
+
+  @SubscribeMessage('heartbeat')
+  async handleHeartbeat(@ConnectedSocket() socket: Socket) {
+    const user = socket.data.user;
+    if (!user) return;
+
+    const EXPIRE_TIME = 60;
+    const { id, role } = user;
+
+    if (role === 'agent') {
+      const key = `im:agent:${id}`;
+      await this.redisClient.expire(key, EXPIRE_TIME);
+    } else if (role === 'visitor') {
+      const key = `im:visitor:${id}`;
+      await this.redisClient.expire(key, EXPIRE_TIME);
+    }
   }
 
   @SubscribeMessage('join_chat')

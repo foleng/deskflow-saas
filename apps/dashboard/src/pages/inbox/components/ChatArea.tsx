@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MoreVertical, CheckCircle, Paperclip, Send, Smile, Clock, Image as ImageIcon, Mic, StopCircle, FileText, Play, Download } from 'lucide-react';
 import { Avatar, Button, Spin, Empty, Image } from 'antd';
@@ -7,10 +7,24 @@ import { useChatStore } from '../../../store/useChatStore';
 
 const API_URL = 'http://localhost:3000';
 
+const EMOJI_LIST = [
+    "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇",
+    "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚",
+    "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🤩",
+    "🥳", "😏", "😒", "😞", "😔", "😟", "😕", "🙁", "☹️", "😣",
+    "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠", "😡", "🤬",
+    "👍", "👎", "👏", "🙌", "👐", "🤲", "🤝", "👊", "✊", "🤛",
+    "🤜", "🤞", "✌️", "🤟", "🤘", "👌", "🤏", "👈", "👉", "👆",
+    "👇", "☝️", "✋", "🤚", "🖐", "🖖", "👋", "🤙", "💪", "🖕",
+    "✍️", "🙏", "🦶", "🦵", "👂", "👃", "🧠", "🦷", "🦴", "👀",
+    "👁", "👅", "👄", "💋", "❤️", "🧡", "💛", "💚", "💙", "💜"
+];
+
 const ChatArea: React.FC = () => {
   const { t } = useTranslation();
   const { messages, activeConversationId, sendMessage, isLoadingMessages } = useChatStore();
   const [inputText, setInputText] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
   // Upload & Recording State
   const [isUploading, setIsUploading] = useState(false);
@@ -19,6 +33,15 @@ const ChatArea: React.FC = () => {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, activeConversationId]);
 
   const handleSend = async () => {
     if (!inputText.trim() && !isRecording) return;
@@ -244,6 +267,7 @@ const ChatArea: React.FC = () => {
                 </div>
               );
             })}
+            <div ref={messagesEndRef} />
           </>
         )}
       </div>
@@ -273,9 +297,9 @@ const ChatArea: React.FC = () => {
              }} 
          />
 
-         <div className="border border-slate-200 rounded-xl shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-primary-100 focus-within:border-primary-400 transition-all">
+         <div className="border border-slate-200 rounded-xl shadow-sm focus-within:ring-2 focus-within:ring-primary-100 focus-within:border-primary-400 transition-all bg-white">
            {/* Toolbar */}
-           <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 bg-slate-50">
+           <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 bg-slate-50 rounded-t-xl">
              <button className="text-sm font-bold text-primary-600 border-b-2 border-primary-600 px-2 py-1">Reply</button>
              <button className="text-sm font-medium text-slate-500 hover:text-slate-700 px-2 py-1 flex items-center gap-1">
                <span className="w-3 h-3 border border-slate-400 rounded-sm bg-yellow-100"></span>
@@ -299,10 +323,35 @@ const ChatArea: React.FC = () => {
            ></textarea>
 
            {/* Footer Actions */}
-           <div className="flex justify-between items-center px-4 py-3 bg-white">
+           <div className="flex justify-between items-center px-4 py-3 bg-white relative rounded-b-xl">
              <div className="flex items-center gap-3 text-slate-400">
                <button className="hover:text-slate-600 font-bold">B</button>
-               <button className="hover:text-slate-600"><Smile size={18} /></button>
+               <button 
+                  className={`hover:text-slate-600 ${showEmojiPicker ? 'text-blue-500' : ''}`}
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+               >
+                   <Smile size={18} />
+               </button>
+
+                {/* Emoji Picker Popover */}
+                {showEmojiPicker && (
+                    <div className="absolute bottom-12 left-0 w-80 bg-white rounded-lg shadow-2xl border border-gray-200 p-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                        <div className="grid grid-cols-8 gap-1 h-64 overflow-y-auto custom-scrollbar overflow-x-hidden">
+                            {EMOJI_LIST.map((emoji) => (
+                                <button
+                                    key={emoji}
+                                    className="text-2xl p-2 hover:bg-gray-100 rounded transition flex items-center justify-center"
+                                    onClick={() => {
+                                        setInputText(prev => prev + emoji);
+                                        setShowEmojiPicker(false);
+                                    }}
+                                >
+                                    {emoji}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
                
                {/* Image Upload */}
                <button 

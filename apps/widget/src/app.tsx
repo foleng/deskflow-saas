@@ -11,7 +11,12 @@ import {
   FileText, 
   Play,
   Image as ImageIcon,
-  StopCircle
+  StopCircle,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+  Download,
+  Smile
 } from 'lucide-preact';
 
 interface Message {
@@ -33,13 +38,45 @@ interface AppProps {
 
 const API_URL = 'http://localhost:3000';
 
-const App = ({ websiteId }: AppProps) => {
+const EMOJI_LIST = [
+    "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇",
+    "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚",
+    "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🤩",
+    "🥳", "😏", "😒", "😞", "😔", "😟", "😕", "🙁", "☹️", "😣",
+    "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠", "😡", "🤬",
+    "👍", "👎", "👏", "🙌", "👐", "🤲", "🤝", "👊", "✊", "🤛",
+    "🤜", "🤞", "✌️", "🤟", "🤘", "👌", "🤏", "👈", "👉", "👆",
+    "👇", "☝️", "✋", "🤚", "🖐", "🖖", "👋", "🤙", "💪", "🖕",
+    "✍️", "🙏", "🦶", "🦵", "👂", "👃", "🧠", "🦷", "🦴", "👀",
+    "👁", "👅", "👄", "💋", "❤️", "🧡", "💛", "💚", "💙", "💜"
+];
+
+const App = ({ websiteId: _ }: AppProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [token, setToken] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<number | null>(null);
+  
+  // Image Preview State
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [scale, setScale] = useState(1);
+  const [rotation, setRotation] = useState(0);
+
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const openPreview = (url: string) => {
+      setPreviewImage(url);
+      setScale(1);
+      setRotation(0);
+  };
+
+  const closePreview = () => {
+      setPreviewImage(null);
+      setScale(1);
+      setRotation(0);
+  };
   
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -113,9 +150,16 @@ const App = ({ websiteId }: AppProps) => {
       transports: ['websocket']
     });
 
+    let heartbeatInterval: any;
+
     newSocket.on('connect', () => {
       console.log('Connected to DeskFlow Support');
       
+      // Start Heartbeat
+      heartbeatInterval = setInterval(() => {
+          newSocket.emit('heartbeat');
+      }, 30000); // 30s interval
+
       // Join Chat to get Conversation ID
       newSocket.emit('join_chat', {}, (response: any) => {
         if (response && response.status === 'ok') {
@@ -146,6 +190,7 @@ const App = ({ websiteId }: AppProps) => {
 
     setSocket(newSocket);
     return () => {
+      clearInterval(heartbeatInterval);
       newSocket.disconnect();
     };
   }, [token]);
@@ -255,7 +300,7 @@ const App = ({ websiteId }: AppProps) => {
         case 'text':
             return (
                 <div className={`
-                    p-3 rounded-2xl shadow-sm text-sm leading-relaxed
+                    p-3 rounded-2xl shadow-sm text-sm leading-relaxed break-all whitespace-pre-wrap
                     ${m.sender === 'me' 
                         ? 'bg-blue-600 text-white rounded-br-none shadow-md' 
                         : 'bg-white text-gray-700 rounded-bl-none border border-gray-100'
@@ -266,12 +311,19 @@ const App = ({ websiteId }: AppProps) => {
             );
         case 'image':
             return (
-                <div className="flex flex-col gap-1">
-                    <div className="bg-white p-1 rounded-2xl rounded-bl-none shadow-sm border border-gray-100 overflow-hidden">
-                        <img src={m.meta?.imageUrl || m.text} className="rounded-xl w-full h-32 object-cover" />
+                <div className="flex flex-col gap-1 min-w-0">
+                    <div className={`
+                        bg-white p-2 rounded-2xl shadow-sm border border-gray-100 overflow-hidden
+                        ${m.sender === 'me' ? 'rounded-br-none' : 'rounded-bl-none'}
+                    `}>
+                        <img 
+                            src={m.meta?.imageUrl || m.text} 
+                            className="rounded-xl max-w-full max-h-[300px] w-auto h-auto block object-contain cursor-zoom-in hover:opacity-95 transition" 
+                            onClick={() => openPreview(m.meta?.imageUrl || m.text || '')}
+                        />
                     </div>
                     {/* Only show text if it's not the URL */}
-                    {m.text && m.text !== m.meta?.imageUrl && <span className="text-[10px] text-gray-400 ml-1">{m.text}</span>}
+                    {m.text && m.text !== m.meta?.imageUrl && <span className="text-[10px] text-gray-400 ml-1 truncate">{m.text}</span>}
                 </div>
             );
         case 'file':
@@ -314,9 +366,79 @@ const App = ({ websiteId }: AppProps) => {
   };
 
   return (
-    <div id="deskflow-widget-container" className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4 font-sans text-base">
+    <>
+        {/* Image Preview Overlay - Rendered in Shadow DOM but outside Widget Container */}
+        {previewImage && (
+            <div 
+                className="fixed inset-0 z-[99999] bg-black/90 flex flex-col items-center justify-center animate-in fade-in duration-200"
+                onClick={closePreview}
+            >
+                {/* Controls */}
+                <div 
+                    className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-white/10 backdrop-blur-md px-6 py-2 rounded-full text-white shadow-xl z-50"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <button 
+                        onClick={() => setScale(s => Math.min(s + 0.5, 5))}
+                        className="p-2 hover:bg-white/20 rounded-full transition"
+                        title="Zoom In"
+                    >
+                        <ZoomIn className="w-5 h-5" />
+                    </button>
+                    <button 
+                        onClick={() => setScale(s => Math.max(s - 0.5, 0.5))}
+                        className="p-2 hover:bg-white/20 rounded-full transition"
+                        title="Zoom Out"
+                    >
+                        <ZoomOut className="w-5 h-5" />
+                    </button>
+                    <button 
+                        onClick={() => setRotation(r => r + 90)}
+                        className="p-2 hover:bg-white/20 rounded-full transition"
+                        title="Rotate"
+                    >
+                        <RotateCw className="w-5 h-5" />
+                    </button>
+                    <button 
+                        onClick={() => window.open(previewImage, '_blank')}
+                        className="p-2 hover:bg-white/20 rounded-full transition"
+                        title="Download/Open"
+                    >
+                        <Download className="w-5 h-5" />
+                    </button>
+                    <div className="w-px h-6 bg-white/20 mx-2"></div>
+                    <button 
+                        onClick={closePreview}
+                        className="p-2 hover:bg-white/20 rounded-full transition hover:text-red-400"
+                        title="Close"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
 
-        {/* 1. Chat Window */}
+                {/* Image Container */}
+                <div 
+                    className="w-full h-full flex items-center justify-center p-8 overflow-auto"
+                    onClick={closePreview}
+                >
+                    <img 
+                        src={previewImage} 
+                        className="max-w-none transition-transform duration-200 ease-out select-none"
+                        style={{ 
+                            transform: `scale(${scale}) rotate(${rotation}deg)`,
+                            cursor: scale > 1 ? 'grab' : 'default',
+                            maxWidth: scale === 1 ? '100%' : 'auto',
+                            maxHeight: scale === 1 ? '100%' : 'auto'
+                        }}
+                        onClick={(e) => e.stopPropagation()} 
+                    />
+                </div>
+            </div>
+        )}
+
+        <div id="deskflow-widget-container" className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4 font-sans text-base">
+
+            {/* 1. Chat Window */}
         <div 
             id="chat-window" 
             className={`
@@ -377,7 +499,7 @@ const App = ({ websiteId }: AppProps) => {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-white border-t border-gray-100 shrink-0">
+            <div className="p-4 bg-white border-t border-gray-100 shrink-0 flex flex-col gap-3">
                 {/* Hidden Inputs */}
                 <input 
                     type="file" 
@@ -402,54 +524,92 @@ const App = ({ websiteId }: AppProps) => {
                 />
 
                 <div className="relative">
+                     {/* Emoji Picker Popover - Adjusted Position */}
+                     {showEmojiPicker && (
+                        <div className="absolute bottom-full left-0 w-full mb-2 bg-white rounded-xl shadow-2xl border border-gray-100 p-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                            <div className="grid grid-cols-7 gap-1 h-60 overflow-y-auto custom-scrollbar overflow-x-hidden">
+                                {EMOJI_LIST.map((emoji) => (
+                                    <button
+                                        key={emoji}
+                                        className="text-2xl p-2 hover:bg-gray-50 rounded-lg transition flex items-center justify-center aspect-square"
+                                        onClick={() => {
+                                            setInputValue(prev => prev + emoji);
+                                            setShowEmojiPicker(false);
+                                        }}
+                                    >
+                                        {emoji}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     <input 
                         type="text" 
                         placeholder={isRecording ? "Recording..." : "Type a message..."}
                         disabled={isRecording}
-                        className={`w-full bg-gray-50 border border-gray-200 rounded-full pl-4 pr-32 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all text-gray-800 ${isRecording ? 'animate-pulse bg-red-50 text-red-500 border-red-200' : ''}`}
+                        className={`w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all text-gray-800 placeholder-gray-400 ${isRecording ? 'animate-pulse bg-red-50 text-red-500 placeholder-red-300' : ''}`}
                         value={inputValue}
                         onInput={(e) => setInputValue((e.target as HTMLInputElement).value)}
                         onKeyDown={(e) => e.key === 'Enter' && !isRecording && sendMessage()}
                     />
-                    
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                </div>
+                
+                {/* Toolbar */}
+                <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-1">
+                        {/* Emoji Toggle */}
+                        <button 
+                            className={`p-2 rounded-full transition ${showEmojiPicker ? 'text-blue-500 bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+                            title="Insert Emoji"
+                            disabled={isUploading || isRecording}
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        >
+                            <Smile className="w-5 h-5" />
+                        </button>
+
                         {/* Image */}
                         <button 
-                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition" 
+                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition" 
                             title="Send Image"
                             disabled={isUploading || isRecording}
                             onClick={() => imageInputRef.current?.click()}
                         >
-                            <ImageIcon className="w-4 h-4" />
+                            <ImageIcon className="w-5 h-5" />
                         </button>
+
                         {/* Attachment */}
                         <button 
-                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition" 
+                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition" 
                             title="Attach file"
                             disabled={isUploading || isRecording}
                             onClick={() => fileInputRef.current?.click()}
                         >
-                            <Paperclip className="w-4 h-4" />
+                            <Paperclip className="w-5 h-5" />
                         </button>
+
                         {/* Voice */}
                         <button 
-                            className={`p-2 rounded-full transition ${isRecording ? 'text-red-500 bg-red-100 hover:bg-red-200' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-200'}`} 
+                            className={`p-2 rounded-full transition ${isRecording ? 'text-red-500 bg-red-100 hover:bg-red-200' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`} 
                             title={isRecording ? "Stop Recording" : "Record Voice"}
                             onClick={isRecording ? stopRecording : startRecording}
                         >
-                             {isRecording ? <StopCircle className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                        </button>
-                        {/* Send */}
-                        <button 
-                            onClick={() => sendMessage()}
-                            disabled={isUploading || isRecording}
-                            className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition shadow-sm shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <Send className="w-4 h-4 ml-0.5" />
+                             {isRecording ? <StopCircle className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                         </button>
                     </div>
+
+                    {/* Send Button */}
+                    <button 
+                        onClick={() => sendMessage()}
+                        disabled={isUploading || isRecording || (!inputValue.trim())}
+                        className="h-10 px-6 bg-blue-600 text-white rounded-full flex items-center justify-center gap-2 hover:bg-blue-700 transition shadow-sm shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none text-sm font-medium"
+                    >
+                        <span>Send</span>
+                        <Send className="w-4 h-4" />
+                    </button>
                 </div>
-                <div className="text-center mt-2">
+
+                <div className="text-center pt-1 border-t border-gray-50 mt-1">
                      <span className="text-[10px] text-gray-300 flex items-center justify-center gap-1">
                         Powered by <span className="font-bold text-gray-400">DeskFlow</span>
                      </span>
@@ -474,6 +634,7 @@ const App = ({ websiteId }: AppProps) => {
         </button>
 
     </div>
+    </>
   );
 };
 

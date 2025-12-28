@@ -128,8 +128,18 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       transports: ['websocket'],
     });
 
+    let heartbeatInterval: any;
+
     newSocket.on('connect', () => {
       console.log('Socket connected');
+      // Start Heartbeat
+      heartbeatInterval = setInterval(() => {
+          newSocket.emit('heartbeat');
+      }, 30000); // 30s interval
+    });
+
+    newSocket.on('disconnect', () => {
+       clearInterval(heartbeatInterval);
     });
 
     newSocket.on('receive_msg', (msg: any) => {
@@ -139,6 +149,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     // Listen for new visitors if needed (for real-time conversation list updates)
     newSocket.on('new_visitor', () => {
         // Refresh conversations list
+        get().fetchConversations();
+    });
+
+    // Listen for conversation updates
+    newSocket.on('conversation_updated', () => {
         get().fetchConversations();
     });
 
