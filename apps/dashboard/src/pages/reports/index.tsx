@@ -26,6 +26,7 @@ import { Button, Select, Avatar, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import classNames from 'classnames';
 import api from '../../lib/api';
+import { getAvatarUrl } from '../../lib/utils';
 
 // --- Mock Data (Fallback) ---
 const CHART_DATA_MOCK = [
@@ -149,7 +150,7 @@ const Reports: React.FC = () => {
       key: 'name',
       render: (_, record) => (
         <div className="flex items-center gap-3">
-          <Avatar src={record.avatar} />
+          <Avatar src={getAvatarUrl(record.avatar)} />
           <span className="font-medium text-slate-900">{record.name}</span>
         </div>
       )

@@ -21,6 +21,7 @@ import { UploadOutlined, DownloadOutlined, InboxOutlined } from '@ant-design/ico
 import classNames from 'classnames';
 import api from '../../lib/api';
 import { useAuthStore } from '../../store/useAuthStore';
+import { getAvatarUrl } from '../../lib/utils';
 
 // --- 1. 定义数据类型 ---
 interface Contact {
@@ -164,7 +165,7 @@ const Contacts: React.FC = () => {
       render: (_, record) => (
         <div className="flex items-center gap-3">
           <div className="relative">
-             <Avatar src={record.avatar} size={40} />
+             <Avatar src={getAvatarUrl(record.avatar)} size={40} />
              {record.status === 'online' && (
                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
              )}

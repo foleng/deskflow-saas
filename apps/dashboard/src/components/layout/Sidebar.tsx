@@ -6,6 +6,7 @@ import { Avatar, Dropdown } from 'antd'; // 引入 Dropdown 用于切换语言
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next'; // <--- 引入 Hook
 import { useAuthStore } from '../../store/useAuthStore';
+import { getAvatarUrl } from '../../lib/utils';
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ const Sidebar: React.FC = () => {
       <div className="px-4 py-6">
         <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:border-primary-200 transition-colors">
           <Avatar 
-            src={user?.avatar?.startsWith('/uploads') ? `http://localhost:3000${user.avatar}` : (user?.avatar || "https://i.pravatar.cc/150?u=agent")} 
+            src={getAvatarUrl(user?.avatar) || "https://i.pravatar.cc/150?u=agent"} 
             size="large" 
             className="border-2 border-white shadow-sm" 
           />

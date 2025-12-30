@@ -7,6 +7,7 @@ import classNames from 'classnames'
 import ChatArea from './components/ChatArea'
 import RightSidebar from './components/RightSidebar'
 import { useChatStore } from '../../store/useChatStore'
+import { getAvatarUrl } from '../../lib/utils'
 
 const Inbox: React.FC = () => {
   const { t } = useTranslation()
@@ -85,7 +86,7 @@ const Inbox: React.FC = () => {
                 )}
               >
                 <div className="relative">
-                  <Avatar src={item.customerAvatar} size={44} />
+                  <Avatar src={getAvatarUrl(item.customerAvatar)} size={44} />
                   {item.unreadCount > 0 && (
                     <span className="absolute -top-2 -right-2 min-w-[20px] h-5 px-1 bg-red-500 text-white text-xs font-bold rounded-full border-2 border-white flex items-center justify-center shadow-sm z-10">
                         {item.unreadCount > 99 ? '99+' : item.unreadCount}

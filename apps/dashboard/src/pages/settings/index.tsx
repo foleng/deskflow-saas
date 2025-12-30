@@ -21,6 +21,7 @@ import type { ColumnsType } from 'antd/es/table';
 import classNames from 'classnames';
 import { useAuthStore } from '../../store/useAuthStore';
 import api from '../../lib/api';
+import { getAvatarUrl } from '../../lib/utils';
 
 // --- Types ---
 interface TeamMember {
@@ -333,7 +334,7 @@ const Settings: React.FC = () => {
              <div className="flex items-center gap-4">
                <Avatar 
                   size={80} 
-                  src={user?.avatar?.startsWith('/uploads') ? `http://localhost:3000${user.avatar}` : user?.avatar} 
+                  src={getAvatarUrl(user?.avatar)} 
                   icon={<User size={40} />} 
                   className="bg-slate-100 text-slate-400" 
                />
