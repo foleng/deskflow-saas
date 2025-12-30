@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { 
   Search, 
   Plus, 
-  Upload, 
+  Upload as UploadIcon, 
   Filter, 
   ArrowUpDown, 
   LayoutGrid, 
@@ -15,10 +15,12 @@ import {
   Pencil,
   Trash2
 } from 'lucide-react';
-import { Table, Button, Input, Avatar, Modal, Form, message, Tag, Popconfirm } from 'antd';
+import { Table, Button, Input, Avatar, Modal, Form, message, Tag, Popconfirm, Upload } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { UploadOutlined, DownloadOutlined, InboxOutlined } from '@ant-design/icons';
 import classNames from 'classnames';
 import api from '../../lib/api';
+import { useAuthStore } from '../../store/useAuthStore';
 
 // --- 1. 定义数据类型 ---
 interface Contact {
@@ -35,12 +37,14 @@ interface Contact {
 
 const Contacts: React.FC = () => {
   const { t } = useTranslation();
+  const token = localStorage.getItem('access_token');
   const [loading, setLoading] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [currentContact, setCurrentContact] = useState<Contact | null>(null);
   const [form] = Form.useForm();
 
@@ -261,7 +265,11 @@ const Contacts: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-3">
-          <Button icon={<Upload size={16} />} className="flex items-center h-10 border-slate-300 text-slate-700 font-medium">
+          <Button 
+            icon={<UploadIcon size={16} />} 
+            className="flex items-center h-10 border-slate-300 text-slate-700 font-medium"
+            onClick={() => setIsImportModalOpen(true)}
+          >
             {t('contacts.import')}
           </Button>
           <Button type="primary" icon={<Plus size={18} />} onClick={openCreateModal} className="flex items-center h-10 bg-primary-600 hover:bg-primary-500 font-medium px-4">
@@ -350,6 +358,77 @@ const Contacts: React.FC = () => {
             <Button type="primary" htmlType="submit">Save</Button>
           </div>
         </Form>
+      </Modal>
+
+      {/* Import Modal */}
+      <Modal
+        title={t('contacts.importTitle', 'Import Contacts')}
+        open={isImportModalOpen}
+        onCancel={() => setIsImportModalOpen(false)}
+        footer={null}
+      >
+        <div className="space-y-6">
+          <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+            <h4 className="font-medium text-slate-800 mb-2">{t('contacts.step1', 'Step 1: Download Template')}</h4>
+            <p className="text-sm text-slate-500 mb-3">
+              {t('contacts.downloadTemplateDesc', 'Download the CSV template to ensure your data is formatted correctly.')}
+            </p>
+            <Button 
+              icon={<DownloadOutlined />} 
+              onClick={async () => {
+                try {
+                  const response = await api.get('/contacts/template', { responseType: 'blob' });
+                  const url = window.URL.createObjectURL(new Blob([response.data]));
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.setAttribute('download', 'contact_template.csv');
+                  document.body.appendChild(link);
+                  link.click();
+                  link.parentNode?.removeChild(link);
+                } catch (error) {
+                  console.error('Download template failed:', error);
+                  message.error(t('contacts.downloadError', 'Failed to download template'));
+                }
+              }}
+            >
+              {t('contacts.downloadTemplate', 'Download Template')}
+            </Button>
+          </div>
+
+          <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+            <h4 className="font-medium text-slate-800 mb-2">{t('contacts.step2', 'Step 2: Upload File')}</h4>
+            <p className="text-sm text-slate-500 mb-3">
+              {t('contacts.uploadDesc', 'Upload your filled CSV file here.')}
+            </p>
+            
+            <Upload.Dragger
+              name="file"
+              multiple={false}
+              action="http://localhost:3000/api/contacts/import"
+              headers={{
+                Authorization: `Bearer ${token}`
+              }}
+              onChange={(info) => {
+                const { status } = info.file;
+                if (status === 'done') {
+                  message.success(`${info.file.name} file uploaded successfully.`);
+                  setIsImportModalOpen(false);
+                  fetchContacts();
+                } else if (status === 'error') {
+                  message.error(`${info.file.name} file upload failed.`);
+                }
+              }}
+            >
+              <p className="ant-upload-drag-icon">
+                <InboxOutlined />
+              </p>
+              <p className="ant-upload-text">Click or drag file to this area to upload</p>
+              <p className="ant-upload-hint">
+                Support for a single CSV file upload.
+              </p>
+            </Upload.Dragger>
+          </div>
+        </div>
       </Modal>
     </div>
   );

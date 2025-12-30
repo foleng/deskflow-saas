@@ -162,6 +162,9 @@ importers:
 
   apps/dashboard:
     dependencies:
+      '@ant-design/icons':
+        specifier: ^6.1.0
+        version: 6.1.0(react-dom@19.2.0)(react@19.2.0)
       '@repo/types':
         specifier: workspace:*
         version: link:../../packages/types

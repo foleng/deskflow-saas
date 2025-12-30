@@ -54,6 +54,13 @@
     "searchPlaceholder": "搜索姓名、邮箱或电话...",
     "sort": "排序: 最近活跃",
     "filter": "筛选: VIP",
+    "importTitle": "导入联系人",
+    "step1": "第一步：下载模板",
+    "downloadTemplateDesc": "下载 CSV 模板以确保您的数据格式正确。",
+    "downloadTemplate": "下载模板",
+    "downloadError": "下载模板失败",
+    "step2": "第二步：上传文件",
+    "uploadDesc": "在此上传填写好的 CSV 文件。",
     "columns": {
       "user": "用户",
       "contactInfo": "联系方式",

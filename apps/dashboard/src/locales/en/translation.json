@@ -54,6 +54,13 @@
     "searchPlaceholder": "Search by name, email, or phone...",
     "sort": "Sort: Last Active",
     "filter": "Filter: VIP",
+    "importTitle": "Import Contacts",
+    "step1": "Step 1: Download Template",
+    "downloadTemplateDesc": "Download the CSV template to ensure your data is formatted correctly.",
+    "downloadTemplate": "Download Template",
+    "downloadError": "Failed to download template",
+    "step2": "Step 2: Upload File",
+    "uploadDesc": "Upload your filled CSV file here.",
     "columns": {
       "user": "User",
       "contactInfo": "Contact Info",
