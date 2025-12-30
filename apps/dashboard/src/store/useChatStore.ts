@@ -55,7 +55,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   selectConversation: async (id: string) => {
-    set({ activeConversationId: id, isLoadingMessages: true, messages: [] });
+    // 1. Clear unread count locally
+    set((state) => ({
+        conversations: state.conversations.map(c => 
+            c.id === id ? { ...c, unreadCount: 0 } : c
+        ),
+        activeConversationId: id,
+        isLoadingMessages: true,
+        messages: []
+    }));
 
     // Join socket room
     const { socket } = get();
@@ -169,9 +177,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   receiveMessage: (m: any) => {
-    const { activeConversationId, messages } = get();
+    const { activeConversationId, messages, conversations } = get();
     
-    // Only append if it belongs to current conversation
+    // 1. If it belongs to current conversation, append to messages
     if (String(m.conversationId) === String(activeConversationId)) {
         const newMessage: Message = {
             id: m._id || Date.now().toString(),
@@ -184,11 +192,35 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             meta: m.content.meta,
             fileName: m.content.meta?.fileName,
             size: m.content.meta?.fileSize,
-        } as any; // Cast to any to match loose types if needed
+        } as any; 
         
         set({ messages: [...messages, newMessage] });
+    }
+
+    // 2. Update conversation list (unread count + last message + reorder)
+    const targetConvIndex = conversations.findIndex(c => String(c.id) === String(m.conversationId));
+    
+    if (targetConvIndex > -1) {
+        const targetConv = { ...conversations[targetConvIndex] };
+        
+        // Update details
+        targetConv.lastMessage = m.content.type === 'text' ? m.content.data : `[${m.content.type}]`;
+        targetConv.time = new Date(m.createdAt || Date.now()).toLocaleTimeString();
+        
+        // Increment unread if NOT active
+        if (String(m.conversationId) !== String(activeConversationId)) {
+            targetConv.unreadCount = (targetConv.unreadCount || 0) + 1;
+        }
+
+        // Move to top
+        const newConversations = [
+            targetConv,
+            ...conversations.filter((_, idx) => idx !== targetConvIndex)
+        ];
+        
+        set({ conversations: newConversations });
     } else {
-        // Optionally update conversation list lastMessage/unreadCount
+        // New conversation? Fetch all to be safe
         get().fetchConversations();
     }
   }

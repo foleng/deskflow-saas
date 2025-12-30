@@ -2,6 +2,7 @@
   "name": "deskflow-saas",
   "private": true,
   "scripts": {
+    "start": "docker-compose up -d && turbo run dev",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",

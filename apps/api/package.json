@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "nest start",
+    "dev": "nest start --watch",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",

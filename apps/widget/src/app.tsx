@@ -87,6 +87,8 @@ const App = ({ websiteId: _ }: AppProps) => {
   const audioChunksRef = useRef<Blob[]>([]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Ref to control auto-scrolling behavior
+  const shouldScrollRef = useRef(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -103,7 +105,10 @@ const App = ({ websiteId: _ }: AppProps) => {
           text: msg.content.data,
           sender: msg.sender.role === 'visitor' ? 'me' : 'agent',
           type: msg.content.type,
+          meta: msg.content.meta
         }));
+        // Scroll to bottom when loading history
+        shouldScrollRef.current = true;
         setMessages(history);
       }
     } catch (err) {
@@ -111,9 +116,20 @@ const App = ({ websiteId: _ }: AppProps) => {
     }
   };
 
+  // Scroll logic: Controlled by shouldScrollRef
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isOpen]);
+    if (shouldScrollRef.current) {
+        scrollToBottom();
+        shouldScrollRef.current = false;
+    }
+  }, [messages]);
+
+  // Scroll when opening chat
+  useEffect(() => {
+      if (isOpen) {
+          setTimeout(scrollToBottom, 100);
+      }
+  }, [isOpen]);
 
   // 1. Initialize Visitor (Get Token)
   useEffect(() => {
@@ -180,6 +196,15 @@ const App = ({ websiteId: _ }: AppProps) => {
         sender: isMe ? 'me' : 'agent',
         type: msg.content.type as any,
       };
+      // Do NOT scroll automatically for incoming messages (unless it's me, which is handled in sendMessage response usually, but for consistency if receive_msg catches my own message?)
+      // Actually receive_msg usually catches incoming from others. If I send, I get ack.
+      // But if I receive my own message via socket broadcast?
+      // The logic: if isMe, scroll. If not, don't.
+      if (isMe) {
+          shouldScrollRef.current = true;
+      } else {
+          shouldScrollRef.current = false;
+      }
       setMessages(prev => [...prev, uiMsg]);
     });
 
@@ -287,6 +312,7 @@ const App = ({ websiteId: _ }: AppProps) => {
                 type: m.content.type as any,
                 meta: m.content.meta
             };
+            shouldScrollRef.current = true;
             setMessages(prev => [...prev, newMessage]);
         } else {
             console.error('Message Send Failed', response);
