@@ -13,6 +13,7 @@ import MainLayout from './components/layout/MainLayout';
 // --- 这里修改了：引入真正的页面组件 ---
 import Dashboard from './pages/dashboard';
 import Contacts from './pages/contacts';
+import KnowledgeBase from './pages/knowledge';
 import Inbox from './pages/inbox'; 
 import Settings from './pages/settings';
 import Login from './pages/auth/Login';
@@ -42,8 +43,9 @@ const AppRoutes = () => {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="inbox" element={<Inbox />} />
-          <Route path="contacts" element={<Contacts />} />
+            <Route path="contacts" element={<Contacts />} />
+            <Route path="knowledge" element={<KnowledgeBase />} />
+            <Route path="inbox" element={<Inbox />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
         </Route>

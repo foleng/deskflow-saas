@@ -9,10 +9,11 @@ import { UploadModule } from './upload/upload.module';
 import { ConversationModule } from './conversation/conversation.module';
 import { RedisModule } from './common/redis/redis.module';
 import { StatsModule } from './stats/stats.module';
-
+import { ContactModule } from './contact/contact.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { RoleModule } from './role/role.module';
+import { KnowledgeModule } from './knowledge/knowledge.module';
 
 @Module({
   imports: [
@@ -55,6 +56,8 @@ import { RoleModule } from './role/role.module';
     RedisModule,
     RoleModule,
     StatsModule,
+    ContactModule,
+    KnowledgeModule,
   ],
 })
 export class AppModule {}

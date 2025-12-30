@@ -3,7 +3,8 @@ import {
   MessageSquare, 
   Users, 
   BarChart3, 
-  Settings 
+  Settings,
+  Book
 } from 'lucide-react';
 import type { SidebarItem } from '../types';
 
@@ -23,6 +24,11 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     key: '/contacts',
     label: 'menu.contacts',
     icon: <Users size={20} />,
+  },
+  {
+    key: '/knowledge',
+    label: 'menu.knowledge',
+    icon: <Book size={20} />,
   },
   {
     key: '/reports',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Search, 
@@ -12,94 +12,124 @@ import {
   Phone, 
   Building2,
   MessageSquare,
-  Pencil
+  Pencil,
+  Trash2
 } from 'lucide-react';
-import { Table, Button, Input, Avatar } from 'antd';
+import { Table, Button, Input, Avatar, Modal, Form, message, Tag, Popconfirm } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import classNames from 'classnames'; // 别忘了这个！
+import classNames from 'classnames';
+import api from '../../lib/api';
 
 // --- 1. 定义数据类型 ---
 interface Contact {
-  key: string;
-  id: string;
+  id: number;
   name: string;
   avatar: string;
   email: string;
   phone: string;
-  companyName: string;
-  companyLogo?: string; // 简易处理，仅用颜色或Icon代替
-  lastActive: string;
+  companyName: string; // Mapped from company_name
+  lastActive: string;  // Mapped from last_active
   tags: string[];
-  status: 'online' | 'offline';
+  status: 'online' | 'offline'; // Derived or stored
 }
-
-// --- 2. Mock 数据 ---
-const CONTACTS_DATA: Contact[] = [
-  {
-    key: '1',
-    id: '#8823',
-    name: 'Alice Freeman',
-    avatar: 'https://i.pravatar.cc/150?u=alice',
-    email: 'alice@example.com',
-    phone: '+1 555-0199',
-    companyName: 'TechCorp',
-    lastActive: '2 mins ago',
-    tags: ['VIP', 'Support'],
-    status: 'online'
-  },
-  {
-    key: '2',
-    id: '#8824',
-    name: 'Bob Smith',
-    avatar: 'https://i.pravatar.cc/150?u=bob',
-    email: 'bob@test.com',
-    phone: '+1 555-0200',
-    companyName: '--',
-    lastActive: '2 days ago',
-    tags: ['New Lead'],
-    status: 'offline'
-  },
-  {
-    key: '3',
-    id: '#8825',
-    name: 'Charlie Davis',
-    avatar: 'https://i.pravatar.cc/150?u=charlie',
-    email: 'charlie@demo.com',
-    phone: '+1 555-0201',
-    companyName: 'Acme Inc',
-    lastActive: '5 hours ago',
-    tags: ['Customer'],
-    status: 'offline'
-  },
-  {
-    key: '4',
-    id: '#8826',
-    name: 'Diana Prince',
-    avatar: 'https://i.pravatar.cc/150?u=diana',
-    email: 'diana@mail.com',
-    phone: '+1 555-0202',
-    companyName: 'Global Ltd',
-    lastActive: '1 day ago',
-    tags: ['Urgent'],
-    status: 'online'
-  },
-  {
-    key: '5',
-    id: '#8827',
-    name: 'Eve Walker',
-    avatar: 'https://i.pravatar.cc/150?u=eve',
-    email: 'eve@test.co',
-    phone: '+1 555-0203',
-    companyName: 'Logistics Co',
-    lastActive: '3 days ago',
-    tags: [],
-    status: 'offline'
-  },
-];
 
 const Contacts: React.FC = () => {
   const { t } = useTranslation();
+  const [loading, setLoading] = useState(false);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentContact, setCurrentContact] = useState<Contact | null>(null);
+  const [form] = Form.useForm();
+
+  // Fetch Contacts
+  const fetchContacts = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/contacts');
+      if (res.data.success) {
+        // Map backend data to frontend interface
+        const mappedData = res.data.data.map((item: any) => ({
+          key: item.id.toString(),
+          id: item.id,
+          name: item.name,
+          avatar: item.avatar || `https://ui-avatars.com/api/?name=${item.name}&background=random`,
+          email: item.email || '--',
+          phone: item.phone || '--',
+          companyName: item.company_name || '--',
+          lastActive: item.last_active ? new Date(item.last_active).toLocaleString() : '--',
+          tags: item.tags || [],
+          status: 'offline' // Default for now
+        }));
+        setContacts(mappedData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch contacts:', error);
+      message.error(t('contacts.fetchError', 'Failed to load contacts'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  // CRUD Operations
+  const handleSave = async (values: any) => {
+    try {
+      const payload = {
+        ...values,
+        company_name: values.companyName,
+        tags: values.tags ? values.tags.split(',').map((t: string) => t.trim()) : []
+      };
+
+      if (currentContact) {
+        await api.put(`/contacts/${currentContact.id}`, payload);
+        message.success(t('contacts.updateSuccess', 'Contact updated successfully'));
+      } else {
+        await api.post('/contacts', payload);
+        message.success(t('contacts.createSuccess', 'Contact created successfully'));
+      }
+      setIsModalOpen(false);
+      form.resetFields();
+      fetchContacts();
+    } catch (error) {
+      console.error('Failed to save contact:', error);
+      message.error(t('contacts.saveError', 'Failed to save contact'));
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await api.delete(`/contacts/${id}`);
+      message.success(t('contacts.deleteSuccess', 'Contact deleted successfully'));
+      fetchContacts();
+    } catch (error) {
+      console.error('Failed to delete contact:', error);
+      message.error(t('contacts.deleteError', 'Failed to delete contact'));
+    }
+  };
+
+  const openEditModal = (contact: Contact) => {
+    setCurrentContact(contact);
+    form.setFieldsValue({
+      name: contact.name,
+      email: contact.email !== '--' ? contact.email : '',
+      phone: contact.phone !== '--' ? contact.phone : '',
+      companyName: contact.companyName !== '--' ? contact.companyName : '',
+      tags: contact.tags.join(', ')
+    });
+    setIsModalOpen(true);
+  };
+
+  const openCreateModal = () => {
+    setCurrentContact(null);
+    form.resetFields();
+    setIsModalOpen(true);
+  };
 
   // 多选配置
   const rowSelection = {
@@ -137,7 +167,7 @@ const Contacts: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <span className="font-bold text-slate-900">{record.name}</span>
-            <span className="text-xs text-slate-400">ID: {record.id}</span>
+            <span className="text-xs text-slate-400">ID: #{record.id}</span>
           </div>
         </div>
       ),
@@ -201,15 +231,20 @@ const Contacts: React.FC = () => {
     {
       title: '', // Actions Column
       key: 'actions',
-      width: 100,
-      render: () => (
+      width: 120,
+      render: (_, record) => (
         <div className="flex items-center gap-2">
            <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
               <MessageSquare size={16} />
            </button>
-           <button className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors">
+           <button onClick={() => openEditModal(record)} className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors">
               <Pencil size={16} />
            </button>
+           <Popconfirm title="Are you sure?" onConfirm={() => handleDelete(record.id)}>
+             <button className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+                <Trash2 size={16} />
+             </button>
+           </Popconfirm>
         </div>
       )
     }
@@ -229,7 +264,7 @@ const Contacts: React.FC = () => {
           <Button icon={<Upload size={16} />} className="flex items-center h-10 border-slate-300 text-slate-700 font-medium">
             {t('contacts.import')}
           </Button>
-          <Button type="primary" icon={<Plus size={18} />} className="flex items-center h-10 bg-primary-600 hover:bg-primary-500 font-medium px-4">
+          <Button type="primary" icon={<Plus size={18} />} onClick={openCreateModal} className="flex items-center h-10 bg-primary-600 hover:bg-primary-500 font-medium px-4">
             {t('contacts.add')}
           </Button>
         </div>
@@ -269,11 +304,12 @@ const Contacts: React.FC = () => {
       {/* 3. Data Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <Table 
+          loading={loading}
           rowSelection={rowSelection}
           columns={columns} 
-          dataSource={CONTACTS_DATA}
+          dataSource={contacts}
           pagination={{ 
-            total: 1240, 
+            total: contacts.length, 
             pageSize: 10, 
             showTotal: (total, range) => `Showing ${range[0]} to ${range[1]} of ${total} results`,
             className: "px-6 py-4"
@@ -281,6 +317,40 @@ const Contacts: React.FC = () => {
           rowClassName="hover:bg-slate-50 transition-colors"
         />
       </div>
+
+      {/* Create/Edit Modal */}
+      <Modal
+        title={currentContact ? "Edit Contact" : "Add New Contact"}
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        footer={null}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSave}
+        >
+          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="email" label="Email" rules={[{ type: 'email' }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="phone" label="Phone">
+            <Input />
+          </Form.Item>
+          <Form.Item name="companyName" label="Company">
+            <Input />
+          </Form.Item>
+          <Form.Item name="tags" label="Tags (comma separated)">
+            <Input placeholder="VIP, Customer" />
+          </Form.Item>
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button type="primary" htmlType="submit">Save</Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   );
 };

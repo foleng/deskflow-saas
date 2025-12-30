@@ -6,6 +6,7 @@
     "dashboard": "概览",
     "inbox": "收件箱",
     "contacts": "通讯录",
+    "knowledge": "知识库",
     "reports": "数据报表",
     "settings": "设置",
     "logout": "退出登录"
@@ -60,6 +61,24 @@
       "lastActive": "最近活跃",
       "tags": "标签",
       "actions": "操作"
+    }
+  },
+  "knowledge": {
+    "title": "知识库",
+    "subtitle": "管理帮助中心文章和文档",
+    "add": "新建文章",
+    "searchPlaceholder": "搜索文章...",
+    "columns": {
+      "title": "标题",
+      "category": "分类",
+      "status": "状态",
+      "updated": "更新时间",
+      "actions": "操作"
+    },
+    "status": {
+      "draft": "草稿",
+      "published": "已发布",
+      "archived": "已归档"
     }
   },
    "inbox": {
