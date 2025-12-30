@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   AreaChart, 
@@ -22,16 +22,17 @@ import {
   Smile, 
   MoreHorizontal 
 } from 'lucide-react';
-import { Button, Select, Avatar, Table, Tag } from 'antd';
+import { Button, Select, Avatar, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import classNames from 'classnames';
+import api from '../../lib/api';
 
-// --- Mock Data ---
-const CHART_DATA = [
+// --- Mock Data (Fallback) ---
+const CHART_DATA_MOCK = [
   { date: 'Sep 01', incoming: 120, resolved: 100 },
   { date: 'Sep 05', incoming: 230, resolved: 180 },
   { date: 'Sep 10', incoming: 180, resolved: 240 },
-  { date: 'Sep 15', incoming: 342, resolved: 280 }, // Highlight point
+  { date: 'Sep 15', incoming: 342, resolved: 280 }, 
   { date: 'Sep 20', incoming: 450, resolved: 390 },
   { date: 'Sep 25', incoming: 380, resolved: 410 },
   { date: 'Sep 30', incoming: 420, resolved: 400 },
@@ -52,14 +53,71 @@ interface AgentStat {
   rating: number;
 }
 
-const AGENT_DATA: AgentStat[] = [
-  { key: '1', name: 'Sarah Jenkins', avatar: 'https://i.pravatar.cc/150?u=sarah', volume: 432, avgTime: '45s', rating: 4.9 },
-  { key: '2', name: 'Mike Ross', avatar: 'https://i.pravatar.cc/150?u=mike', volume: 320, avgTime: '1m 20s', rating: 4.5 },
-  { key: '3', name: 'Rachel Green', avatar: 'https://i.pravatar.cc/150?u=rachel', volume: 210, avgTime: '2m 10s', rating: 4.2 },
-];
-
 const Reports: React.FC = () => {
   const { t } = useTranslation();
+  const [loading, setLoading] = useState(false);
+  const [period, setPeriod] = useState('30');
+  
+  // State for data
+  const [overview, setOverview] = useState({
+    totalConversations: 0,
+    resolvedConversations: 0,
+    avgCsat: '0.0',
+    avgResponseTime: '--',
+    resolutionRate: '0%'
+  });
+  const [volumeData, setVolumeData] = useState<any[]>(CHART_DATA_MOCK);
+  const [agentData, setAgentData] = useState<AgentStat[]>([]);
+
+  const fetchReports = async () => {
+    setLoading(true);
+    try {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - parseInt(period));
+      
+      const res = await api.get('/reports/dashboard', {
+        params: {
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString()
+        }
+      });
+
+      if (res.data.success) {
+        const { overview, volume, agents } = res.data.data;
+        
+        // Calculate resolution rate
+        const resolutionRate = overview.totalConversations > 0 
+          ? Math.round((overview.resolvedConversations / overview.totalConversations) * 100) + '%'
+          : '0%';
+
+        setOverview({
+          ...overview,
+          resolutionRate
+        });
+        
+        // Format volume data for chart
+        if (volume && volume.length > 0) {
+            setVolumeData(volume.map((v: any) => ({
+                date: new Date(v.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                incoming: parseInt(v.incoming),
+                resolved: parseInt(v.resolved)
+            })));
+        }
+
+        setAgentData(agents || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch reports:', error);
+      message.error('Failed to load reports');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReports();
+  }, [period]);
 
   // --- Components ---
   const StatCard = ({ title, value, change, icon, iconColor, suffix }: any) => (
@@ -135,7 +193,8 @@ const Reports: React.FC = () => {
         
         <div className="flex items-center gap-3">
            <Select 
-             defaultValue="30" 
+             value={period}
+             onChange={setPeriod}
              className="w-40 h-10"
              options={[
                { value: '7', label: t('reports.period.last7') },
@@ -157,29 +216,29 @@ const Reports: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
          <StatCard 
            title={t('reports.cards.totalConversations')} 
-           value="3,402" 
-           change="↑ 12%" 
+           value={overview.totalConversations.toLocaleString()} 
+           change="--" 
            icon={<MessageSquare size={20} className="text-blue-600" />}
            iconColor="bg-blue-50"
          />
          <StatCard 
            title={t('reports.cards.avgResponseTime')} 
-           value="1m 42s" 
-           change="↓ 5%" 
+           value={overview.avgResponseTime} 
+           change="--" 
            icon={<Clock size={20} className="text-orange-600" />}
            iconColor="bg-orange-50"
          />
          <StatCard 
            title={t('reports.cards.resolutionRate')} 
-           value="94%" 
-           change="↑ 1%" 
+           value={overview.resolutionRate} 
+           change="--" 
            icon={<CheckCircle size={20} className="text-green-600" />}
            iconColor="bg-green-50"
          />
          <StatCard 
            title={t('reports.cards.csat')} 
-           value="4.8" 
-           change="↑ 0.2" 
+           value={overview.avgCsat} 
+           change="--" 
            suffix="out of 5.0 scale"
            icon={<Smile size={20} className="text-purple-600" />}
            iconColor="bg-purple-50"
@@ -207,7 +266,7 @@ const Reports: React.FC = () => {
         
         <div className="h-[300px] w-full">
            <ResponsiveContainer width="100%" height="100%">
-             <AreaChart data={CHART_DATA} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+             <AreaChart data={volumeData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                <defs>
                  <linearGradient id="colorIncoming" x1="0" y1="0" x2="0" y2="1">
                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
@@ -262,7 +321,7 @@ const Reports: React.FC = () => {
           </div>
           <Table 
              columns={agentColumns} 
-             dataSource={AGENT_DATA} 
+             dataSource={agentData} 
              pagination={false} 
              className="flex-1"
           />
@@ -296,7 +355,7 @@ const Reports: React.FC = () => {
                 </ResponsiveContainer>
                 {/* Center Text */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                   <span className="text-4xl font-bold text-slate-900">4.8</span>
+                   <span className="text-4xl font-bold text-slate-900">{overview.avgCsat}</span>
                    <span className="text-xs text-slate-500 uppercase font-bold tracking-wider">Average</span>
                 </div>
               </div>
