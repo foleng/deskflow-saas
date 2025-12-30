@@ -8,6 +8,7 @@ import { ChatModule } from './chat/chat.module';
 import { UploadModule } from './upload/upload.module';
 import { ConversationModule } from './conversation/conversation.module';
 import { RedisModule } from './common/redis/redis.module';
+import { StatsModule } from './stats/stats.module';
 
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -53,6 +54,7 @@ import { RoleModule } from './role/role.module';
     ConversationModule,
     RedisModule,
     RoleModule,
+    StatsModule,
   ],
 })
 export class AppModule {}

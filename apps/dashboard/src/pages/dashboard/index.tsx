@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 import { 
@@ -11,6 +11,7 @@ import {
 import { Avatar, Table, Tag, Button, Timeline, Segmented } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import StatsCard from './components/StatsCard';
+import api from '../../lib/api';
 
 // --- Types ---
 interface Ticket {
@@ -23,28 +24,53 @@ interface Ticket {
 }
 
 interface Agent {
+  key: number;
   name: string;
   role: string;
-  status: 'Online' | 'Away' | 'Offline';
+  status: 'Online' | 'Busy' | 'Offline';
   avatar: string;
 }
 
-// --- Mock Data ---
-const TICKETS_DATA: Ticket[] = [
-  { key: '1', status: 'Urgent', subject: 'Payment gateway failure', customerName: 'John Doe', customerAvatar: '#3b82f6', updated: '5m ago' },
-  { key: '2', status: 'Open', subject: 'Account access locked', customerName: 'Sarah M.', customerAvatar: '#ec4899', updated: '24m ago' },
-  { key: '3', status: 'Pending', subject: 'Feature request: Dark Mode', customerName: 'Mike K.', customerAvatar: '#10b981', updated: '2h ago' },
-  { key: '4', status: 'Open', subject: 'Billing Inquiry', customerName: 'Anna L.', customerAvatar: '#f59e0b', updated: '3h ago' },
-];
-
-const AGENTS_DATA: Agent[] = [
-  { name: 'Sarah Jenks', role: 'Support Lead', status: 'Online', avatar: 'https://i.pravatar.cc/150?u=1' },
-  { name: 'Michael Chen', role: 'Technical', status: 'Away', avatar: 'https://i.pravatar.cc/150?u=2' },
-  { name: 'Emily Rose', role: 'Billing', status: 'Offline', avatar: 'https://i.pravatar.cc/150?u=3' },
-];
+interface DashboardStats {
+  conversations: { value: string; trend: string; trendDirection: 'up' | 'down' };
+  responseTime: { value: string; trend: string; trendDirection: 'up' | 'down' };
+  csat: { value: string; trend: string; trendDirection: 'up' | 'down' };
+  agents: { value: string; trend: string; trendDirection: 'up' | 'down' };
+}
 
 const Dashboard: React.FC = () => {
   const { t } = useTranslation();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
+
+  const fetchDashboardData = async () => {
+    try {
+      // Don't set loading to true on refreshes to avoid flickering
+      if (!stats) setLoading(true);
+      
+      const [statsRes, ticketsRes, agentsRes] = await Promise.all([
+        api.get('/stats/dashboard'),
+        api.get('/stats/tickets'),
+        api.get('/stats/agents')
+      ]);
+
+      if (statsRes.data.success) setStats(statsRes.data.data);
+      if (ticketsRes.data.success) setTickets(ticketsRes.data.data);
+      if (agentsRes.data.success) setAgents(agentsRes.data.data);
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 30000); // Poll every 30s
+    return () => clearInterval(interval);
+  }, []);
 
   // 表格列定义
   const columns: ColumnsType<Ticket> = [
@@ -85,6 +111,8 @@ const Dashboard: React.FC = () => {
     },
   ];
 
+  const onlineAgentsCount = agents.filter(a => a.status === 'Online' || a.status === 'Busy').length;
+
   return (
     <div className="space-y-6">
       
@@ -110,37 +138,37 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard 
           title={t('dashboard.stats.conversations')} 
-          value="24" 
+          value={stats?.conversations.value || '-'} 
           icon={<MessageSquare size={20} />} 
-          trend="12%" 
-          trendDirection="up"
+          trend={stats?.conversations.trend} 
+          trendDirection={stats?.conversations.trendDirection}
           trendColor="green"
           iconBgColor="bg-blue-50"
           iconColor="text-blue-600"
         />
         <StatsCard 
           title={t('dashboard.stats.responseTime')} 
-          value="4m 12s" 
+          value={stats?.responseTime.value || '-'} 
           icon={<Clock size={20} />} 
-          trend="30s" 
-          trendDirection="down"
+          trend={stats?.responseTime.trend} 
+          trendDirection={stats?.responseTime.trendDirection}
           trendColor="green" // 响应时间下降是好事(Green)
           iconBgColor="bg-orange-50"
           iconColor="text-orange-600"
         />
         <StatsCard 
           title={t('dashboard.stats.csat')} 
-          value="4.8/5" 
+          value={stats?.csat.value || '-'} 
           icon={<Smile size={20} />} 
-          trend="" 
+          trend={stats?.csat.trend} 
           iconBgColor="bg-purple-50"
           iconColor="text-purple-600"
         />
         <StatsCard 
           title={t('dashboard.stats.agents')} 
-          value="8" 
+          value={stats?.agents.value || '-'} 
           icon={<Headphones size={20} />} 
-          trend="" 
+          trend={stats?.agents.trend} 
           iconBgColor="bg-sky-50"
           iconColor="text-sky-600"
         />
@@ -157,8 +185,9 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="p-2">
             <Table 
+              loading={loading}
               columns={columns} 
-              dataSource={TICKETS_DATA} 
+              dataSource={tickets} 
               pagination={false} 
               rowClassName="hover:bg-slate-50 transition-colors cursor-pointer"
             />
@@ -172,12 +201,12 @@ const Dashboard: React.FC = () => {
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="font-bold text-lg text-slate-800">{t('dashboard.team.title')}</h2>
-              <span className="text-xs text-green-600 font-bold bg-green-50 px-2 py-1 rounded-full">3 Online</span>
+              <span className="text-xs text-green-600 font-bold bg-green-50 px-2 py-1 rounded-full">{onlineAgentsCount} Online</span>
             </div>
             
             <div className="space-y-4">
-              {AGENTS_DATA.map((agent, index) => (
-                <div key={index} className="flex items-center justify-between">
+              {agents.map((agent) => (
+                <div key={agent.key} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="relative">
                        <Avatar src={agent.avatar} size="large" />
@@ -185,7 +214,7 @@ const Dashboard: React.FC = () => {
                          "absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full",
                          {
                            'bg-green-500': agent.status === 'Online',
-                           'bg-yellow-500': agent.status === 'Away',
+                           'bg-orange-500': agent.status === 'Busy',
                            'bg-slate-400': agent.status === 'Offline',
                          }
                        )}></span>
@@ -199,12 +228,15 @@ const Dashboard: React.FC = () => {
                     "text-xs font-medium",
                     {
                       'text-green-600': agent.status === 'Online',
-                      'text-yellow-600': agent.status === 'Away',
+                      'text-orange-600': agent.status === 'Busy',
                       'text-slate-400': agent.status === 'Offline',
                     }
                   )}>{agent.status}</span>
                 </div>
               ))}
+              {agents.length === 0 && !loading && (
+                  <div className="text-center text-slate-400 py-4">No agents found</div>
+              )}
             </div>
             
             <Button block className="mt-6 bg-slate-50 border-slate-200 text-slate-600 font-medium hover:bg-slate-100 hover:text-slate-900">
@@ -212,7 +244,7 @@ const Dashboard: React.FC = () => {
             </Button>
           </div>
 
-          {/* Live Activity */}
+          {/* Live Activity (Still Mocked as there is no activity log API yet) */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex-1">
             <h2 className="font-bold text-lg text-slate-800 mb-6">{t('dashboard.activity.title')}</h2>
             <Timeline
@@ -221,26 +253,8 @@ const Dashboard: React.FC = () => {
                   color: 'blue',
                   children: (
                     <div className="text-sm">
-                      <span className="font-bold text-slate-900">Sarah Jenks</span> resolved ticket <a href="#" className="text-primary-600 font-medium">#2459</a>
+                      <span className="font-bold text-slate-900">System</span> initialized dashboard
                       <div className="text-xs text-slate-400 mt-0.5">Just now</div>
-                    </div>
-                  ),
-                },
-                {
-                  color: 'gray',
-                  children: (
-                    <div className="text-sm">
-                      New ticket created by <span className="font-bold text-slate-900">John Doe</span>
-                      <div className="text-xs text-slate-400 mt-0.5">15 mins ago</div>
-                    </div>
-                  ),
-                },
-                {
-                  color: 'orange',
-                  children: (
-                    <div className="text-sm">
-                      <span className="font-bold text-slate-900">Michael Chen</span> changed status to <span className="text-orange-500 font-medium">Away</span>
-                      <div className="text-xs text-slate-400 mt-0.5">42 mins ago</div>
                     </div>
                   ),
                 },
