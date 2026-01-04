@@ -15,6 +15,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
+  token: localStorage.getItem('access_token'),
   isAuthenticated: !!localStorage.getItem('access_token'),
 
   login: async (loginDto) => {
@@ -23,7 +24,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     
     localStorage.setItem('access_token', token);
     localStorage.setItem('user', JSON.stringify(agent));
-    set({ user: agent, isAuthenticated: true });
+    set({ user: agent, token, isAuthenticated: true });
   },
 
   register: async (registerDto) => {

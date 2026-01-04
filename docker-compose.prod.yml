@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # 1. API Backend
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: always
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASS=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DB=kefu_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MONGO_URI=mongodb://mongo:27017/deskflow
+      - JWT_SECRET=${JWT_SECRET}
+      # MinIO Config (Optional, using local storage if not provided)
+      # - MINIO_ENDPOINT=minio
+      # - MINIO_PORT=9000
+      # - MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
+      # - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      # - MINIO_BUCKET=kefu-files
+    volumes:
+      - ./uploads:/app/dist/uploads # Persist uploads
+    depends_on:
+      - mysql
+      - redis
+      - mongo
+    networks:
+      - deskflow-network
+
+  # 2. Dashboard Frontend (Nginx)
+  dashboard:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+    restart: always
+    ports:
+      - "80:80" # Expose to host
+    depends_on:
+      - api
+    networks:
+      - deskflow-network
+
+  # 3. MySQL
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: kefu_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - deskflow-network
+
+  # 4. Redis
+  redis:
+    image: redis:6.2
+    restart: always
+    volumes:
+      - redis_data:/data
+    networks:
+      - deskflow-network
+
+  # 5. MongoDB
+  mongo:
+    image: mongo:5.0
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - deskflow-network
+
+  # 6. MinIO (Optional)
+  # minio:
+  #   image: minio/minio
+  #   restart: always
+  #   ports:
+  #     - "9000:9000"
+  #     - "9001:9001"
+  #   environment:
+  #     MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+  #     MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+  #   command: server /data --console-address ":9001"
+  #   volumes:
+  #     - minio_data:/data
+  #   networks:
+  #     - deskflow-network
+
+volumes:
+  mysql_data:
+  redis_data:
+  mongo_data:
+  minio_data:
+
+networks:
+  deskflow-network:
+    driver: bridge
