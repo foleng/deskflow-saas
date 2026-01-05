@@ -3,5 +3,13 @@
     {
       "mode": "auto"
     }
+  ],
+  "liveServer.settings.ignoreFiles": [
+    "**/*.log",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.json",
+    "node_modules/**",
+    ".git/**"
   ]
 }

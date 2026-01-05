@@ -47,7 +47,7 @@ services:
 
   # 3. MySQL
   mysql:
-    image: mysql:8.0
+    image: mariadb:10.6 # Switched to MariaDB for better availability
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}

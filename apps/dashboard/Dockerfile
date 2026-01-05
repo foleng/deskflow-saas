@@ -25,9 +25,10 @@ COPY . .
 
 # Build Dashboard
 ENV VITE_API_URL=/api
-RUN pnpm turbo run build --filter=dashboard
+RUN pnpm turbo run build --filter=dashboard...
 
-# 确保 widget 也被打包出来
+# 确保 widget 也被打包出来 (使用绝对路径)
+ENV VITE_API_URL=http://59.110.7.69
 RUN pnpm turbo run build --filter=widget
 
 # Serve Stage

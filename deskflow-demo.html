@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>客户网站 Demo</title>
+</head>
+<body style="background-color: #f3f4f6; font-family: sans-serif; padding: 50px;">
+    
+    <h1>👠 欢迎光临我的鞋店</h1>
+    <p>这里是客户的网站内容...</p>
+    <p>请看右下角，应该有一个客服气泡。</p>
+
+    <!-- ==================================== -->
+    <!-- DeskFlow 嵌入代码 (由 SaaS 平台提供) -->
+    <!-- ==================================== -->
+    <script>
+      (function(w,d,s,u,id){
+        w.DeskFlow=w.DeskFlow||{};
+        
+        // 1. 创建挂载点
+        var div = d.createElement('div');
+        div.id = 'deskflow-container';
+        d.body.appendChild(div);
+        
+        // 2. 加载你的 widget.js
+        var script = d.createElement(s);
+        script.async = true;
+        script.src = u; // 这里的 u 就是你的服务器地址
+        
+        script.onload = function() {
+            // 3. 实例化插件
+            // 注意：这里标签名必须和你 apps/widget/src/main.tsx 里 define 的名字一样
+            // 通常是 <deskflow-widget>
+            var widget = d.createElement('deskflow-widget');
+            
+            // 传入网站 ID (目前测试阶段随便填，比如 demo-123)
+            widget.setAttribute('data-website-id', id);
+            
+            div.appendChild(widget);
+        };
+        d.head.appendChild(script);
+      })(window, document, 'script', 'http://59.110.7.69/widget.js', 'demo-website-123');
+    </script>
+
+</body>
+</html>

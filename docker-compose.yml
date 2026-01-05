@@ -1,7 +1,7 @@
 services:
   # 1. 关系型数据库：存客服、访客、会话状态
   mysql:
-    image: mysql:8.0
+    image: mariadb:10.6 # 替换 mysql:8.0 以解决拉取失败问题 (完全兼容)
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: kefu_db
