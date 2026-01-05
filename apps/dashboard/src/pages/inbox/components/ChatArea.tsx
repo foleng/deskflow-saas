@@ -22,7 +22,7 @@ const EMOJI_LIST = [
 
 const ChatArea: React.FC = () => {
   const { t } = useTranslation();
-  const { messages, activeConversationId, sendMessage, isLoadingMessages } = useChatStore();
+  const { messages, activeConversationId, sendMessage, isLoadingMessages, markAsRead } = useChatStore();
   const [inputText, setInputText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
@@ -34,14 +34,41 @@ const ChatArea: React.FC = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isNearBottom, setIsNearBottom] = useState(true);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+      const distanceToBottom = scrollHeight - scrollTop - clientHeight;
+      setIsNearBottom(distanceToBottom < 100);
+
+      // Mark as read on user scroll interaction if active conversation
+      if (activeConversationId) {
+        markAsRead(activeConversationId);
+      }
+    }
   };
 
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
+  };
+
+  // Reset scroll state when switching conversations
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, activeConversationId]);
+    setIsNearBottom(true);
+    scrollToBottom('auto');
+  }, [activeConversationId]);
+
+  // Auto-scroll on new messages
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    const isSelf = lastMessage?.senderRole === 'agent';
+
+    if (isNearBottom || isSelf) {
+      scrollToBottom();
+    }
+  }, [messages]);
 
   const handleSend = async () => {
     if (!inputText.trim() && !isRecording) return;
@@ -219,7 +246,11 @@ const ChatArea: React.FC = () => {
       </div>
 
       {/* 2. Messages List (Scrollable) */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30">
+      <div 
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30"
+      >
         {isLoadingMessages ? (
           <div className="flex justify-center items-center h-full">
             <Spin />
@@ -245,7 +276,7 @@ const ChatArea: React.FC = () => {
 
               return (
                 <div key={msg.id} className={classNames("flex gap-4 max-w-[80%]", { "ml-auto flex-row-reverse": isAgent })}>
-                  <Avatar src={isAgent ? "https://i.pravatar.cc/150?u=agent" : "https://i.pravatar.cc/150?u=visitor"} size={40} className="shrink-0" />
+                  <Avatar src={msg.senderAvatar || (isAgent ? "https://i.pravatar.cc/150?u=agent" : "https://i.pravatar.cc/150?u=visitor")} size={40} className="shrink-0" />
                   
                   <div>
                     <div className={classNames("flex items-baseline gap-2 mb-1", { "justify-end": isAgent })}>

@@ -7,11 +7,13 @@ import classNames from 'classnames'
 import ChatArea from './components/ChatArea'
 import RightSidebar from './components/RightSidebar'
 import { useChatStore } from '../../store/useChatStore'
+import { useAuthStore } from '../../store/useAuthStore'
 import { getAvatarUrl } from '../../lib/utils'
 
 const Inbox: React.FC = () => {
   const { t } = useTranslation()
-  const [activeTab, setActiveTab] = useState('Mine')
+  const [activeTab, setActiveTab] = useState('mine')
+  const { user } = useAuthStore()
   
   const { 
     conversations, 
@@ -20,10 +22,30 @@ const Inbox: React.FC = () => {
     selectConversation, 
     connectSocket, 
     disconnectSocket,
-    isLoadingConversations 
+    isLoadingConversations,
+    markAsRead
   } = useChatStore()
   
   const token = localStorage.getItem('access_token');
+
+  // Handle window focus/visibility to clear unread counts
+  useEffect(() => {
+    const handleFocus = () => {
+      if (activeConversationId) {
+        markAsRead(activeConversationId);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    // document.addEventListener('visibilitychange', handleFocus); 
+    // ^ 'focus' covers tab switching and window focusing usually. 
+    // If 'visibilitychange' is needed for mobile/background specifics, can add it, 
+    // but 'focus' is safer to avoid double-firing or firing when hidden.
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [activeConversationId, markAsRead]);
 
   useEffect(() => {
     fetchConversations()
@@ -34,6 +56,16 @@ const Inbox: React.FC = () => {
       disconnectSocket()
     }
   }, [fetchConversations, connectSocket, disconnectSocket, token])
+
+  const filteredConversations = conversations.filter((c) => {
+    if (activeTab === 'mine') {
+      return c.agentId === user?.id;
+    }
+    if (activeTab === 'unassigned') {
+      return !c.agentId;
+    }
+    return true; // 'all'
+  });
 
   return (
     // 使用 h-[calc(100vh-4rem)] 来确保高度填满屏幕，减去 padding
@@ -58,9 +90,9 @@ const Inbox: React.FC = () => {
           <Segmented
             block
             options={[
-              t('inbox.tabs.mine'),
-              t('inbox.tabs.unassigned'),
-              t('inbox.tabs.all'),
+              { label: t('inbox.tabs.mine'), value: 'mine' },
+              { label: t('inbox.tabs.unassigned'), value: 'unassigned' },
+              { label: t('inbox.tabs.all'), value: 'all' },
             ]}
             value={activeTab}
             onChange={(val) => setActiveTab(val as string)}
@@ -74,7 +106,7 @@ const Inbox: React.FC = () => {
                <Spin />
              </div>
           ) : (
-            conversations.map((item) => (
+            filteredConversations.map((item) => (
               <div
                 key={item.id}
                 onClick={() => selectConversation(item.id)}

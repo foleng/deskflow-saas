@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards, Request, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, Request, ForbiddenException, NotFoundException, Patch } from '@nestjs/common';
 import { InjectModel as InjectSequelizeModel } from '@nestjs/sequelize';
 import { Conversation } from './conversation.model';
 import { InjectModel as InjectMongooseModel } from '@nestjs/mongoose';
@@ -13,6 +13,42 @@ export class ConversationController {
     @InjectMongooseModel(Message.name) private messageModel: Model<Message>,
   ) {}
 
+  @Patch(':conversationId/read')
+  @UseGuards(JwtAuthGuard)
+  async markAsRead(
+    @Param('conversationId') conversationId: string,
+    @Request() req,
+  ) {
+    const user = req.user;
+    const conversation = await this.conversationModel.findByPk(conversationId);
+    
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    if (user.role === 'visitor' && conversation.visitor_uuid !== user.id) {
+      throw new ForbiddenException('Forbidden: You are not the owner');
+    }
+
+    // Determine whose messages to mark as read
+    // If I am agent, I read 'visitor' messages.
+    // If I am visitor, I read 'agent' messages.
+    const senderRoleToRead = user.role === 'agent' ? 'visitor' : 'agent';
+
+    await this.messageModel.updateMany(
+      {
+        conversationId: parseInt(conversationId, 10),
+        'sender.role': senderRoleToRead,
+        read: false
+      },
+      {
+        $set: { read: true }
+      }
+    );
+
+    return { success: true };
+  }
+
   @Get('my')
   @UseGuards(JwtAuthGuard)
   async getMyConversations(@Request() req) {
@@ -20,7 +56,8 @@ export class ConversationController {
     
     let whereClause: any = {};
     if (user.role === 'agent') {
-      whereClause.agent_id = user.id;
+      // Allow agents to see all conversations to support 'Unassigned' and 'All' tabs
+      // Frontend will handle filtering
     } else if (user.role === 'visitor') {
       whereClause.visitor_uuid = user.id;
     }
@@ -30,9 +67,28 @@ export class ConversationController {
       order: [['updatedAt', 'DESC']],
     });
 
+    // Enrich with unread count
+    const enrichedConversations = await Promise.all(conversations.map(async (conv) => {
+      const plainConv = conv.get({ plain: true });
+      
+      const countQuery: any = {
+        conversationId: plainConv.id,
+        read: false
+      };
+
+      if (user.role === 'agent') {
+        countQuery['sender.role'] = 'visitor';
+      } else {
+        countQuery['sender.role'] = 'agent';
+      }
+
+      const unreadCount = await this.messageModel.countDocuments(countQuery);
+      return { ...plainConv, unreadCount };
+    }));
+
     return {
       success: true,
-      data: conversations,
+      data: enrichedConversations,
     };
   }
 

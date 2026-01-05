@@ -6,14 +6,19 @@ import { Avatar, Dropdown } from 'antd'; // 引入 Dropdown 用于切换语言
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next'; // <--- 引入 Hook
 import { useAuthStore } from '../../store/useAuthStore';
+import { useChatStore } from '../../store/useChatStore';
 import { getAvatarUrl } from '../../lib/utils';
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t, i18n } = useTranslation(); // <--- 获取 t 函数和 i18n 实例
+  const { t, i18n } = useTranslation(); 
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const conversations = useChatStore((state) => state.conversations);
+
+  // Calculate total unread count
+  const totalUnreadCount = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
 
   const handleLogout = () => {
     logout();
@@ -78,6 +83,9 @@ const Sidebar: React.FC = () => {
         
         {SIDEBAR_ITEMS.map((item) => {
           const isActive = location.pathname.startsWith(item.key);
+          // Dynamically get badge for inbox
+          const badgeCount = item.key === '/inbox' ? totalUnreadCount : item.badge;
+
           return (
             <NavLink
               key={item.key}
@@ -100,7 +108,8 @@ const Sidebar: React.FC = () => {
                 <span className="font-medium text-sm">{t(item.label as any)}</span>
               </div>
               
-              {item.badge && (
+              {/* Only render badge if count > 0 or if it's a non-number badge */}
+              {badgeCount ? (
                 <span className={classNames(
                   "px-2 py-0.5 rounded-full text-xs font-bold",
                   {
@@ -108,9 +117,9 @@ const Sidebar: React.FC = () => {
                     "bg-primary-100 text-primary-600": !isActive
                   }
                 )}>
-                  {item.badge}
+                  {typeof badgeCount === 'number' && badgeCount > 99 ? '99+' : badgeCount}
                 </span>
-              )}
+              ) : null}
             </NavLink>
           );
         })}

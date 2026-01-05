@@ -3,6 +3,7 @@ export interface Message {
   senderId: string;
   senderRole?: string; // Added
   senderName?: string; // Added
+  senderAvatar?: string; // Added
   content: string;
   timestamp: string;
   type: 'text' | 'image' | 'file' | 'audio' | 'system'; // 支持系统消息
@@ -19,6 +20,7 @@ export interface Conversation {
   lastMessage: string;
   time: string;
   unreadCount: number;
+  agentId?: number; // Added
   status: 'open' | 'resolved' | 'snoozed';
   tags: string[]; // 如 'Urgent', 'Feature Request'
 }

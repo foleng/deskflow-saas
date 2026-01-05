@@ -18,7 +18,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     key: '/inbox',
     label: 'menu.inbox',
     icon: <MessageSquare size={20} />,
-    badge: 12,
+    // badge: 12, // Removing hardcoded badge
   },
   {
     key: '/contacts',
