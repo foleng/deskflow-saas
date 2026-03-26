@@ -1,135 +1,136 @@
-# Turborepo starter
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-This Turborepo starter is maintained by the Turborepo core team.
+# Deskflow SaaS
 
-## Using this example
+Deskflow SaaS is a comprehensive customer service platform built with modern web technologies, designed to streamline customer support operations with real-time chat, agent management, and analytics capabilities.
 
-Run the following command:
+## Features
 
-```sh
-npx create-turbo@latest
+- Real-time Chat: WebSocket-based communication for instant customer-agent interaction
+- Agent Management: Complete agent lifecycle management with role-based access control
+- Conversation History: Persistent storage of all customer interactions
+- Knowledge Base: Centralized repository for customer support information
+- Analytics Dashboard: Real-time statistics and reporting
+- Multi-language Support: Built-in internationalization for global teams
+- File Upload: Support for uploading and sharing files during conversations
+
+## Tech Stack
+
+### Backend (apps/api)
+- Framework: NestJS
+- Database: MySQL/MariaDB, MongoDB
+- Cache: Redis
+- Real-time: Socket.IO
+- Authentication: JWT, Google OAuth
+- File Storage: Local storage with MinIO support
+
+### Frontend Dashboard (apps/dashboard)
+- Framework: React 18
+- UI Library: Ant Design
+- State Management: Zustand
+- Routing: React Router
+- Internationalization: i18next
+- Build Tool: Vite
+
+### Frontend Widget (apps/widget)
+- Framework: React/Preact
+- Build Tool: Vite
+- Lightweight: Optimized for quick loading
+
+### Shared Packages
+- Type Definitions: Shared TypeScript types
+- UI Components: Reusable React components
+- ESLint Config: Shared linting rules
+- TypeScript Config: Shared TypeScript configuration
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+
+- pnpm 9+
+- Docker and Docker Compose
+
+### Installation
+
+1. Clone the repository
+
+```bash
+git clone <repository-url>
+cd deskflow-saas
 ```
 
-## What's inside?
+2. Install dependencies
 
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+```bash
+pnpm install
 ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+3. Start the development environment
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+```bash
+pnpm start
 ```
 
-### Develop
+This command will:
+- Start all required services using Docker Compose (MySQL, MongoDB, Redis, MinIO)
+- Start the development servers for all apps
 
-To develop all apps and packages, run the following command:
+4. Access the applications
+- Dashboard: http://localhost:5173
+- API: http://localhost:3000
+- Widget: http://localhost:5174
 
-```
-cd my-turborepo
+### Development Commands
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
+| Command | Description |
+|---------|-------------|
+| pnpm dev | Start all apps in development mode |
+| pnpm build | Build all apps and packages |
+| pnpm lint | Run linting on all apps and packages |
+| pnpm format | Format all files with Prettier |
+| pnpm check-types | Run TypeScript type checking |
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
+### Environment Variables
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+Refer to the .env.example files in each app directory for required environment variables.
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+## Project Structure
 
 ```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+deskflow-saas/
+├── apps/
+│   ├── api/              # Backend API application
+│   ├── dashboard/        # Frontend dashboard for agents
+│   └── widget/           # Customer-facing chat widget
+├── packages/
+│   ├── eslint-config/    # Shared ESLint configuration
+│   ├── types/            # Shared TypeScript types
+│   ├── typescript-config/ # Shared TypeScript configuration
+│   └── ui/               # Shared UI components
+├── docker-compose.yml    # Docker Compose configuration
+├── package.json          # Root package configuration
+├── pnpm-workspace.yaml   # pnpm workspace configuration
+└── turbo.json            # Turborepo configuration
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+## Deployment
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+### Development
+Use pnpm start to run the application in development mode with all services.
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
+### Production
+Refer to docker-compose.prod.yml for production deployment configuration.
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
+## Contributing
 
-## Useful Links
+Contributions are welcome! Please follow these steps:
 
-Learn more about the power of Turborepo:
+1. Fork the repository
+2. Create a feature branch (git checkout -b feature/your-feature)
+3. Commit your changes (git commit -m 'Add some feature')
+4. Push to the branch (git push origin feature/your-feature)
+5. Open a Pull Request
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+## License
+
+MIT
